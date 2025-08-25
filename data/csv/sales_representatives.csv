@@ -1,0 +1,6 @@
+rep_code,name,department,branch,email,phone,hire_date
+SR001,田中太郎,営業部,東京本店,tanaka@example.com,03-1234-5678,2020-04-01
+SR002,佐藤花子,営業部,東京本店,sato@example.com,03-1234-5679,2019-04-01
+SR003,鈴木一郎,営業部,大阪支店,suzuki@example.com,06-1234-5678,2021-04-01
+SR004,高橋美咲,営業部,名古屋支店,takahashi@example.com,052-1234-5678,2018-04-01
+SR005,山田健太,営業部,福岡支店,yamada@example.com,092-1234-5678,2022-04-01

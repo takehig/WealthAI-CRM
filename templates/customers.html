@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}顧客一覧 - WealthAI CRM{% endblock %}
+{% block header %}顧客一覧{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>顧客コード</th>
+                        <th>氏名</th>
+                        <th>年齢</th>
+                        <th>職業</th>
+                        <th>年収</th>
+                        <th>純資産</th>
+                        <th>リスク許容度</th>
+                        <th>投資経験</th>
+                        <th>担当営業</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr>
+                        <td><strong>{{ customer.customer_code }}</strong></td>
+                        <td>
+                            <div>
+                                <strong>{{ customer.name }}</strong>
+                                <br><small class="text-muted">{{ customer.name_kana }}</small>
+                            </div>
+                        </td>
+                        <td>
+                            {% if customer.birth_date %}
+                                {% set age = (2025 - customer.birth_date.year) %}
+                                {{ age }}歳
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ customer.occupation or '-' }}</td>
+                        <td>
+                            {% if customer.annual_income %}
+                                ¥{{ "{:,.0f}".format(customer.annual_income) }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if customer.net_worth %}
+                                ¥{{ "{:,.0f}".format(customer.net_worth) }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if customer.risk_tolerance == 'conservative' %}
+                                <span class="badge bg-success">保守的</span>
+                            {% elif customer.risk_tolerance == 'moderate' %}
+                                <span class="badge bg-warning text-dark">中程度</span>
+                            {% elif customer.risk_tolerance == 'aggressive' %}
+                                <span class="badge bg-danger">積極的</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if customer.investment_experience == 'beginner' %}
+                                <span class="badge bg-light text-dark">初心者</span>
+                            {% elif customer.investment_experience == 'intermediate' %}
+                                <span class="badge bg-info">中級者</span>
+                            {% elif customer.investment_experience == 'expert' %}
+                                <span class="badge bg-primary">上級者</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if customer.sales_rep %}
+                                <div>
+                                    <strong>{{ customer.sales_rep.name }}</strong>
+                                    <br><small class="text-muted">{{ customer.sales_rep.branch }}</small>
+                                </div>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="/customers/{{ customer.customer_id }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> 詳細
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <p class="text-muted">
+        <i class="fas fa-info-circle"></i> 
+        総顧客数: {{ customers|length }}名
+    </p>
+</div>
+{% endblock %}

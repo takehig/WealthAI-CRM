@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}経済イベント一覧 - WealthAI CRM{% endblock %}
+{% block header %}経済イベント一覧{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        {% for event in events %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-1">{{ event.title }}</h5>
+                            <div>
+                                {% if event.event_type == 'election' %}
+                                    <span class="badge bg-primary">選挙</span>
+                                {% elif event.event_type == 'policy_change' %}
+                                    <span class="badge bg-warning text-dark">政策変更</span>
+                                {% elif event.event_type == 'economic_indicator' %}
+                                    <span class="badge bg-info">経済指標</span>
+                                {% elif event.event_type == 'political_event' %}
+                                    <span class="badge bg-secondary">政治イベント</span>
+                                {% else %}
+                                    <span class="badge bg-dark">{{ event.event_type }}</span>
+                                {% endif %}
+                                
+                                {% if event.impact_level == 'high' %}
+                                    <span class="badge bg-danger">高影響</span>
+                                {% elif event.impact_level == 'medium' %}
+                                    <span class="badge bg-warning text-dark">中影響</span>
+                                {% elif event.impact_level == 'low' %}
+                                    <span class="badge bg-success">低影響</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if event.description %}
+                        <p class="card-text">{{ event.description }}</p>
+                        {% endif %}
+                        
+                        <div class="row">
+                            {% if event.affected_sectors %}
+                            <div class="col-md-6">
+                                <h6 class="text-muted">影響セクター:</h6>
+                                {% for sector in event.affected_sectors %}
+                                    <span class="badge bg-light text-dark me-1">{{ sector }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            
+                            {% if event.affected_currencies %}
+                            <div class="col-md-6">
+                                <h6 class="text-muted">影響通貨:</h6>
+                                {% for currency in event.affected_currencies %}
+                                    <span class="badge bg-success me-1">{{ currency }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-end">
+                            <h4 class="text-primary">{{ event.event_date.strftime('%Y年%m月%d日') }}</h4>
+                            {% set days_until = (event.event_date - (2025, 7, 31)|strptime('%Y, %m, %d')).days %}
+                            {% if days_until > 0 %}
+                                <p class="text-muted">あと{{ days_until }}日</p>
+                            {% elif days_until == 0 %}
+                                <p class="text-warning"><strong>本日</strong></p>
+                            {% else %}
+                                <p class="text-muted">{{ -days_until }}日前</p>
+                            {% endif %}
+                            <small class="text-muted">
+                                登録日: {{ event.created_at.strftime('%Y/%m/%d') }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="mt-3">
+    <p class="text-muted">
+        <i class="fas fa-info-circle"></i> 
+        総イベント数: {{ events|length }}件
+        | 高影響: {{ events|selectattr('impact_level', 'equalto', 'high')|list|length }}件
+        | 中影響: {{ events|selectattr('impact_level', 'equalto', 'medium')|list|length }}件
+        | 低影響: {{ events|selectattr('impact_level', 'equalto', 'low')|list|length }}件
+    </p>
+</div>
+{% endblock %}

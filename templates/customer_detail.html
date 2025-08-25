@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+
+{% block title %}{{ customer.name }} - 顧客詳細 - WealthAI CRM{% endblock %}
+{% block header %}顧客詳細: {{ customer.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- 顧客基本情報 -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-user me-2"></i>基本情報
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th width="40%">顧客コード</th>
+                        <td><strong>{{ customer.customer_code }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>氏名</th>
+                        <td>
+                            <strong>{{ customer.name }}</strong>
+                            {% if customer.name_kana %}
+                                <br><small class="text-muted">{{ customer.name_kana }}</small>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>生年月日</th>
+                        <td>
+                            {% if customer.birth_date %}
+                                {{ customer.birth_date.strftime('%Y年%m月%d日') }}
+                                ({{ (2025 - customer.birth_date.year) }}歳)
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>性別</th>
+                        <td>{{ customer.gender or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>職業</th>
+                        <td>{{ customer.occupation or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>年収</th>
+                        <td>
+                            {% if customer.annual_income %}
+                                ¥{{ "{:,.0f}".format(customer.annual_income) }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>純資産</th>
+                        <td>
+                            {% if customer.net_worth %}
+                                ¥{{ "{:,.0f}".format(customer.net_worth) }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>リスク許容度</th>
+                        <td>
+                            {% if customer.risk_tolerance == 'conservative' %}
+                                <span class="badge bg-success">保守的</span>
+                            {% elif customer.risk_tolerance == 'moderate' %}
+                                <span class="badge bg-warning text-dark">中程度</span>
+                            {% elif customer.risk_tolerance == 'aggressive' %}
+                                <span class="badge bg-danger">積極的</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>投資経験</th>
+                        <td>
+                            {% if customer.investment_experience == 'beginner' %}
+                                <span class="badge bg-light text-dark">初心者</span>
+                            {% elif customer.investment_experience == 'intermediate' %}
+                                <span class="badge bg-info">中級者</span>
+                            {% elif customer.investment_experience == 'expert' %}
+                                <span class="badge bg-primary">上級者</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>担当営業</th>
+                        <td>
+                            {% if customer.sales_rep %}
+                                <strong>{{ customer.sales_rep.name }}</strong>
+                                <br><small class="text-muted">{{ customer.sales_rep.branch }}</small>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 保有商品 -->
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-briefcase me-2"></i>保有商品 ({{ holdings|length }}件)
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if holdings %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>商品名</th>
+                                <th>種類</th>
+                                <th>数量</th>
+                                <th>取得価格</th>
+                                <th>現在価格</th>
+                                <th>評価額</th>
+                                <th>損益</th>
+                                <th>満期日</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for holding in holdings %}
+                            <tr>
+                                <td>
+                                    <strong>{{ holding.product.product_name }}</strong>
+                                    <br><small class="text-muted">{{ holding.product.product_code }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ holding.product.product_type }}</span>
+                                </td>
+                                <td>{{ "{:,.2f}".format(holding.quantity) }}</td>
+                                <td>¥{{ "{:,.0f}".format(holding.unit_price) }}</td>
+                                <td>
+                                    {% if holding.current_price %}
+                                        ¥{{ "{:,.0f}".format(holding.current_price) }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if holding.current_value %}
+                                        ¥{{ "{:,.0f}".format(holding.current_value) }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if holding.unrealized_gain_loss %}
+                                        {% if holding.unrealized_gain_loss > 0 %}
+                                            <span class="text-success">+¥{{ "{:,.0f}".format(holding.unrealized_gain_loss) }}</span>
+                                        {% else %}
+                                            <span class="text-danger">¥{{ "{:,.0f}".format(holding.unrealized_gain_loss) }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if holding.maturity_date %}
+                                        {{ holding.maturity_date.strftime('%Y/%m/%d') }}
+                                        {% if holding.maturity_date.year == 2025 or holding.maturity_date.year == 2026 %}
+                                            <span class="badge bg-warning text-dark">近日満期</span>
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">保有商品がありません。</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 営業メモ -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-sticky-note me-2"></i>営業メモ ({{ sales_notes|length }}件)
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if sales_notes %}
+                {% for note in sales_notes %}
+                <div class="border-bottom pb-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="mb-1">{{ note.subject or 'メモ' }}</h6>
+                        <div>
+                            {% if note.priority == 'high' %}
+                                <span class="badge badge-priority-high">高</span>
+                            {% elif note.priority == 'normal' %}
+                                <span class="badge badge-priority-normal">中</span>
+                            {% elif note.priority == 'low' %}
+                                <span class="badge badge-priority-low">低</span>
+                            {% endif %}
+                            {% if note.is_cash_related %}
+                                <span class="badge bg-success">入金関連</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <p class="mb-2">{{ note.content }}</p>
+                    <small class="text-muted">
+                        {{ note.created_at.strftime('%Y/%m/%d %H:%M') }}
+                        {% if note.note_type %}
+                            | {{ note.note_type }}
+                        {% endif %}
+                    </small>
+                    {% if note.predicted_amount and note.predicted_date %}
+                    <div class="mt-2">
+                        <small class="text-success">
+                            <i class="fas fa-yen-sign"></i> 予測金額: ¥{{ "{:,.0f}".format(note.predicted_amount) }}
+                            | 予測日: {{ note.predicted_date.strftime('%Y/%m/%d') }}
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="text-muted">営業メモがありません。</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 入金予測 -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-money-bill-wave me-2"></i>入金予測 ({{ cash_inflows|length }}件)
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if cash_inflows %}
+                {% for inflow in cash_inflows %}
+                <div class="border-bottom pb-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="mb-1">{{ inflow.source_type }}</h6>
+                        <div>
+                            {% if inflow.confidence_level == 'high' %}
+                                <span class="badge bg-success">確度高</span>
+                            {% elif inflow.confidence_level == 'medium' %}
+                                <span class="badge bg-warning text-dark">確度中</span>
+                            {% elif inflow.confidence_level == 'low' %}
+                                <span class="badge bg-danger">確度低</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <strong class="text-success">¥{{ "{:,.0f}".format(inflow.predicted_amount) }}</strong>
+                        </div>
+                        <div class="col-6">
+                            <strong>{{ inflow.predicted_date.strftime('%Y/%m/%d') }}</strong>
+                        </div>
+                    </div>
+                    {% if inflow.source_note %}
+                    <p class="mt-2 mb-0"><small>{{ inflow.source_note }}</small></p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="text-muted">入金予測がありません。</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="/customers" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>顧客一覧に戻る
+    </a>
+</div>
+{% endblock %}

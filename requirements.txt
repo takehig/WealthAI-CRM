@@ -1,0 +1,28 @@
+# Database
+psycopg2-binary
+SQLAlchemy
+alembic
+
+# Web Framework
+fastapi
+uvicorn[standard]
+jinja2
+
+# Data Processing
+pandas
+
+# Configuration
+python-dotenv
+pydantic
+pydantic-settings
+
+# Development
+pytest
+pytest-asyncio
+black
+flake8
+
+# Date/Time
+python-dateutil
+boto3
+botocore

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}保有商品一覧 - WealthAI CRM{% endblock %}
+{% block header %}保有商品一覧{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>顧客</th>
+                        <th>商品名</th>
+                        <th>種類</th>
+                        <th>数量</th>
+                        <th>取得価格</th>
+                        <th>現在価格</th>
+                        <th>評価額</th>
+                        <th>損益</th>
+                        <th>満期日</th>
+                        <th>購入日</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for holding in holdings %}
+                    <tr>
+                        <td>
+                            <a href="/customers/{{ holding.customer.customer_id }}" class="text-decoration-none">
+                                <strong>{{ holding.customer.name }}</strong>
+                                <br><small class="text-muted">{{ holding.customer.customer_code }}</small>
+                            </a>
+                        </td>
+                        <td>
+                            <strong>{{ holding.product.product_name }}</strong>
+                            <br><small class="text-muted">{{ holding.product.product_code }}</small>
+                        </td>
+                        <td>
+                            {% if holding.product.product_type == 'bond' %}
+                                <span class="badge bg-primary">債券</span>
+                            {% elif holding.product.product_type == 'stock' %}
+                                <span class="badge bg-danger">株式</span>
+                            {% elif holding.product.product_type == 'fund' %}
+                                <span class="badge bg-success">投信</span>
+                            {% elif holding.product.product_type == 'structured_product' %}
+                                <span class="badge bg-warning text-dark">仕組み債</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ holding.product.product_type }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ "{:,.2f}".format(holding.quantity) }}</td>
+                        <td>¥{{ "{:,.0f}".format(holding.unit_price) }}</td>
+                        <td>
+                            {% if holding.current_price %}
+                                ¥{{ "{:,.0f}".format(holding.current_price) }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if holding.current_value %}
+                                ¥{{ "{:,.0f}".format(holding.current_value) }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if holding.unrealized_gain_loss %}
+                                {% if holding.unrealized_gain_loss > 0 %}
+                                    <span class="text-success">+¥{{ "{:,.0f}".format(holding.unrealized_gain_loss) }}</span>
+                                {% else %}
+                                    <span class="text-danger">¥{{ "{:,.0f}".format(holding.unrealized_gain_loss) }}</span>
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if holding.maturity_date %}
+                                {{ holding.maturity_date.strftime('%Y/%m/%d') }}
+                                {% if holding.maturity_date.year == 2025 or holding.maturity_date.year == 2026 %}
+                                    <br><span class="badge bg-warning text-dark">近日満期</span>
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ holding.purchase_date.strftime('%Y/%m/%d') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <p class="text-muted">
+        <i class="fas fa-info-circle"></i> 
+        総保有商品数: {{ holdings|length }}件
+    </p>
+</div>
+{% endblock %}

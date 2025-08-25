@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}ダッシュボード - WealthAI CRM{% endblock %}
+{% block header %}ダッシュボード (AWS環境){% endblock %}
+
+{% block content %}
+<div class="alert alert-success mb-4">
+    <i class="fas fa-cloud me-2"></i>
+    <strong>AWS環境で稼働中！</strong> デプロイメント機能のテスト中です。
+</div>
+
+<div class="row">
+    <!-- 統計カード -->
+    <div class="col-md-3 mb-4">
+        <div class="card card-stats">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="card-category text-muted">担当顧客数</p>
+                        <h3 class="card-title">{{ "{:,}".format(stats.total_customers) }}</h3>
+                    </div>
+                    <div class="text-primary">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card card-stats">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="card-category text-muted">取扱商品数</p>
+                        <h3 class="card-title">{{ "{:,}".format(stats.total_products) }}</h3>
+                    </div>
+                    <div class="text-success">
+                        <i class="fas fa-box fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card card-stats">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="card-category text-muted">顧客保有商品数</p>
+                        <h3 class="card-title">{{ "{:,}".format(stats.total_holdings) }}</h3>
+                    </div>
+                    <div class="text-warning">
+                        <i class="fas fa-briefcase fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card card-stats">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="card-category text-muted">営業活動記録</p>
+                        <h3 class="card-title">{{ "{:,}".format(stats.total_sales_notes) }}</h3>
+                    </div>
+                    <div class="text-info">
+                        <i class="fas fa-sticky-note fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2"></i>部全体の管理状況
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <p class="text-muted mb-1">顧客資産総額</p>
+                        <h4 class="text-primary">¥{{ "{:,.0f}".format(stats.total_assets) }}</h4>
+                        <small class="text-muted">全担当顧客の合計</small>
+                    </div>
+                    <div class="col-6">
+                        <p class="text-muted mb-1">入金予測総額</p>
+                        <h4 class="text-success">¥{{ "{:,.0f}".format(stats.total_predicted_inflows) }}</h4>
+                        <small class="text-muted">今後の見込み</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tasks me-2"></i>営業活動状況
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <p class="text-muted mb-1">入金予測案件</p>
+                        <h4 class="text-warning">{{ "{:,}".format(stats.total_cash_inflows) }}</h4>
+                        <small class="text-muted">追跡中の案件</small>
+                    </div>
+                    <div class="col-6">
+                        <p class="text-muted mb-1">注目イベント</p>
+                        <h4 class="text-danger">{{ "{:,}".format(stats.total_economic_events) }}</h4>
+                        <small class="text-muted">市場影響要因</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>WealthAI CRMシステム概要
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">このシステムは、ウェルスマネジメント部門の顧客管理とAIエージェント支援のためのCRMシステムです。</p>
+                
+                <h6>実装予定の3つのスクリーニングシナリオ:</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card border-primary mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title text-primary">
+                                    <i class="fas fa-calendar-check me-2"></i>満期債券スクリーニング
+                                </h6>
+                                <p class="card-text small">満期が近い円債保有顧客を自動抽出し、外債等の新商品を提案</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-warning mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title text-warning">
+                                    <i class="fas fa-vote-yea me-2"></i>政治イベント対応
+                                </h6>
+                                <p class="card-text small">衆議院解散等の政治イベント時に影響を受ける顧客を特定</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-success mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title text-success">
+                                    <i class="fas fa-money-bill-wave me-2"></i>入金予測スクリーニング
+                                </h6>
+                                <p class="card-text small">営業メモから入金予測を抽出し、適切な商品提案を支援</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <h6>部門管理機能:</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>担当顧客の一元管理</li>
+                                <li><i class="fas fa-check text-success me-2"></i>保有商品の損益状況把握</li>
+                                <li><i class="fas fa-check text-success me-2"></i>営業活動の記録・追跡</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>入金予測の管理</li>
+                                <li><i class="fas fa-check text-success me-2"></i>市場イベントの影響分析</li>
+                                <li><i class="fas fa-check text-success me-2"></i>顧客別の詳細情報表示</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
