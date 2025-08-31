@@ -57,8 +57,9 @@ Nginx Proxy (Port 80)
 ├── Portal (/) → Static HTML
 ├── CRM (/crm/) → Port 8000
 ├── ProductMaster (/products/) → Port 8001
-└── AIChat (/aichat/) → Port 8002
-    └── ProductMaster MCP → Port 8003
+├── AIChat (/aichat/) → Port 8002
+├── ProductMaster MCP (/mcp/products/) → Port 8003
+└── [Future] MarketData MCP (/mcp/market/) → Port 8005
 ```
 
 ### Technology Stack
@@ -186,6 +187,7 @@ git push origin main
 location /crm/ { proxy_pass http://127.0.0.1:8000/; }
 location /products/ { proxy_pass http://127.0.0.1:8001/; }
 location /aichat/ { proxy_pass http://127.0.0.1:8002/; }
+location /mcp/products/ { proxy_pass http://127.0.0.1:8003/; }
 ```
 
 ### JavaScript API Paths
