@@ -270,8 +270,7 @@ async def execute_query(request: QueryRequest):
         conn = psycopg2.connect(
             host="localhost",
             database="wealthai",
-            user="postgres",
-            password="postgres"
+            user="ec2-user"
         )
         
         cursor = conn.cursor()
