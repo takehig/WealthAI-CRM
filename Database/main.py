@@ -12,7 +12,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import psycopg2
 import time
+import logging
 from typing import List, Dict, Any
+from datetime import datetime
+
+# ログ設定
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 from psycopg2.extras import RealDictCursor
 from datetime import datetime
 import logging
@@ -34,6 +40,19 @@ templates = Jinja2Templates(directory="templates")
 # リクエストモデル
 class QueryRequest(BaseModel):
     query: str
+
+def log_and_collect(message: str, logs: list):
+    """OSログ出力とレスポンス用ログ収集を同時実行"""
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    log_message = f"[DATABASE] {message}"
+    
+    # OSログ出力
+    logger.info(log_message)
+    
+    # レスポンス用ログ収集
+    logs.append(f"[{timestamp}] {message}")
+    
+    return log_message
 
 # ログ設定
 logging.basicConfig(level=logging.INFO)
@@ -267,11 +286,11 @@ async def execute_query(request: QueryRequest):
     start_time = time.time()
     logs = []
     
-    logs.append(f"[START] Query execution started: {request.query}")
+    log_and_collect(f"Query execution started: {request.query}", logs)
     
     try:
-        logs.append("[DB_CONNECT] Attempting database connection...")
-        logs.append(f"[DB_CONNECT] Host: localhost, Database: wealthai, User: wealthai_user")
+        log_and_collect("Attempting database connection...", logs)
+        log_and_collect("Host: localhost, Database: wealthai, User: wealthai_user", logs)
         
         conn = psycopg2.connect(
             host="localhost",
@@ -281,10 +300,10 @@ async def execute_query(request: QueryRequest):
             port=5432
         )
         
-        logs.append("[DB_CONNECT] ✅ Database connection successful")
+        log_and_collect("✅ Database connection successful", logs)
         
         cursor = conn.cursor()
-        logs.append(f"[SQL_EXECUTE] Executing query: {request.query}")
+        log_and_collect(f"Executing query: {request.query}", logs)
         cursor.execute(request.query)
         
         # SELECT文の場合は結果を取得
@@ -292,7 +311,7 @@ async def execute_query(request: QueryRequest):
             results = cursor.fetchall()
             columns = [desc[0] for desc in cursor.description]
             
-            logs.append(f"[SQL_RESULT] Found {len(results)} rows, {len(columns)} columns")
+            log_and_collect(f"Found {len(results)} rows, {len(columns)} columns", logs)
             
             # 辞書形式に変換
             data = []
@@ -300,7 +319,7 @@ async def execute_query(request: QueryRequest):
                 data.append(dict(zip(columns, row)))
             
             execution_time = round((time.time() - start_time) * 1000, 2)
-            logs.append(f"[COMPLETE] Execution completed in {execution_time}ms")
+            log_and_collect(f"Execution completed in {execution_time}ms", logs)
             
             return {
                 "success": True,
@@ -313,8 +332,8 @@ async def execute_query(request: QueryRequest):
             # INSERT/UPDATE/DELETE等の場合
             conn.commit()
             execution_time = round((time.time() - start_time) * 1000, 2)
-            logs.append(f"[COMMIT] Transaction committed, affected rows: {cursor.rowcount}")
-            logs.append(f"[COMPLETE] Execution completed in {execution_time}ms")
+            log_and_collect(f"Transaction committed, affected rows: {cursor.rowcount}", logs)
+            log_and_collect(f"Execution completed in {execution_time}ms", logs)
             
             return {
                 "success": True,
@@ -329,9 +348,13 @@ async def execute_query(request: QueryRequest):
         error_detail = traceback.format_exc()
         execution_time = round((time.time() - start_time) * 1000, 2)
         
-        logs.append(f"[ERROR] Exception occurred: {str(e)}")
-        logs.append(f"[ERROR] Error type: {type(e).__name__}")
-        logs.append(f"[ERROR] Execution failed after {execution_time}ms")
+        log_and_collect(f"❌ Exception occurred: {str(e)}", logs)
+        log_and_collect(f"Error type: {type(e).__name__}", logs)
+        log_and_collect(f"Execution failed after {execution_time}ms", logs)
+        
+        # OSログにもエラー詳細を出力
+        logger.error(f"[DATABASE] SQL execution error: {str(e)}")
+        logger.error(f"[DATABASE] Error detail: {error_detail}")
         
         return {
             "success": False,
@@ -343,6 +366,7 @@ async def execute_query(request: QueryRequest):
     finally:
         if 'conn' in locals():
             conn.close()
+            log_and_collect("Database connection closed", logs)
 
 @app.get("/health")
 async def health_check():
