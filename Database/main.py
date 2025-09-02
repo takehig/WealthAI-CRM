@@ -307,9 +307,12 @@ async def execute_query(request: QueryRequest):
             }
             
     except Exception as e:
+        import traceback
+        error_detail = traceback.format_exc()
         return {
             "success": False,
             "error": str(e),
+            "error_detail": error_detail,
             "execution_time": round((time.time() - start_time) * 1000, 2)
         }
     finally:

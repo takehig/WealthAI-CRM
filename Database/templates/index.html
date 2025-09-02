@@ -151,7 +151,11 @@
                         resultContainer.innerHTML = `実行完了: ${data.message || 'クエリが正常に実行されました'}`;
                     }
                 } else {
-                    resultContainer.innerHTML = `エラー: ${data.error}`;
+                    let errorMsg = `エラー: ${data.error}`;
+                    if (data.error_detail) {
+                        errorMsg += `\n\n詳細:\n${data.error_detail}`;
+                    }
+                    resultContainer.innerHTML = errorMsg;
                 }
             } catch (error) {
                 resultContainer.innerHTML = `ネットワークエラー: ${error.message}`;
