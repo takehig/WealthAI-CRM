@@ -131,7 +131,7 @@ async def database_management_ui():
                 }
                 
                 try {
-                    const response = await fetch('/api/execute-sql', {
+                    const response = await fetch('/execute', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -222,60 +222,6 @@ async def database_management_ui():
     </html>
     """
 
-@app.post("/api/execute-sql")
-async def execute_sql(request: dict):
-    """SQL実行API"""
-    try:
-        sql = request.get("sql", "").strip()
-        params = request.get("params", [])
-        
-        if not sql:
-            return {"status": "error", "error": "SQLクエリが空です"}
-        
-        logger.info(f"[DATABASE] Executing SQL: {sql}")
-        logger.info(f"[DATABASE] Parameters: {params}")
-        
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
-        if params:
-            cursor.execute(sql, params)
-        else:
-            cursor.execute(sql)
-            
-        if sql.strip().upper().startswith('SELECT'):
-            results = cursor.fetchall()
-            result_data = [dict(row) for row in results]
-            logger.info(f"[DATABASE] Query returned {len(result_data)} rows")
-            conn.close()
-            return {
-                "status": "success",
-                "query": sql,
-                "params": params,
-                "count": len(result_data),
-                "results": result_data
-            }
-        else:
-            conn.commit()
-            conn.close()
-            return {
-                "status": "success", 
-                "query": sql,
-                "params": params,
-                "message": "クエリが正常に実行されました"
-            }
-            
-    except Exception as e:
-        logger.error(f"[DATABASE] SQL execution error: {e}")
-        return {
-            "status": "error",
-            "query": sql,
-            "params": params,
-            "error": str(e)
-        }
-
-@app.get("/", response_class=HTMLResponse)
-async def read_root():
     """データベース管理画面を表示"""
     with open("templates/index.html", "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
