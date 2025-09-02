@@ -121,6 +121,7 @@
                 });
 
                 const data = await response.json();
+                console.log('API Response:', data); // デバッグ用
 
                 if (data.success) {
                     if (data.data && data.data.length > 0) {
