@@ -265,8 +265,14 @@ async def read_root():
 async def execute_query(request: QueryRequest):
     """SQLクエリを実行"""
     start_time = time.time()
+    logs = []
+    
+    logs.append(f"[START] Query execution started: {request.query}")
     
     try:
+        logs.append("[DB_CONNECT] Attempting database connection...")
+        logs.append(f"[DB_CONNECT] Host: localhost, Database: wealthai, User: wealthai_user")
+        
         conn = psycopg2.connect(
             host="localhost",
             database="wealthai",
@@ -275,7 +281,10 @@ async def execute_query(request: QueryRequest):
             port=5432
         )
         
+        logs.append("[DB_CONNECT] ✅ Database connection successful")
+        
         cursor = conn.cursor()
+        logs.append(f"[SQL_EXECUTE] Executing query: {request.query}")
         cursor.execute(request.query)
         
         # SELECT文の場合は結果を取得
@@ -283,39 +292,53 @@ async def execute_query(request: QueryRequest):
             results = cursor.fetchall()
             columns = [desc[0] for desc in cursor.description]
             
+            logs.append(f"[SQL_RESULT] Found {len(results)} rows, {len(columns)} columns")
+            
             # 辞書形式に変換
             data = []
             for row in results:
                 data.append(dict(zip(columns, row)))
             
             execution_time = round((time.time() - start_time) * 1000, 2)
+            logs.append(f"[COMPLETE] Execution completed in {execution_time}ms")
             
             return {
                 "success": True,
                 "data": data,
                 "execution_time": execution_time,
-                "message": f"{len(data)}件のレコードを取得しました"
+                "message": f"{len(data)}件のレコードを取得しました",
+                "logs": logs
             }
         else:
             # INSERT/UPDATE/DELETE等の場合
             conn.commit()
             execution_time = round((time.time() - start_time) * 1000, 2)
+            logs.append(f"[COMMIT] Transaction committed, affected rows: {cursor.rowcount}")
+            logs.append(f"[COMPLETE] Execution completed in {execution_time}ms")
             
             return {
                 "success": True,
                 "data": [],
                 "execution_time": execution_time,
-                "message": f"クエリが正常に実行されました（影響行数: {cursor.rowcount}）"
+                "message": f"クエリが正常に実行されました（影響行数: {cursor.rowcount}）",
+                "logs": logs
             }
             
     except Exception as e:
         import traceback
         error_detail = traceback.format_exc()
+        execution_time = round((time.time() - start_time) * 1000, 2)
+        
+        logs.append(f"[ERROR] Exception occurred: {str(e)}")
+        logs.append(f"[ERROR] Error type: {type(e).__name__}")
+        logs.append(f"[ERROR] Execution failed after {execution_time}ms")
+        
         return {
             "success": False,
             "error": str(e),
             "error_detail": error_detail,
-            "execution_time": round((time.time() - start_time) * 1000, 2)
+            "execution_time": execution_time,
+            "logs": logs
         }
     finally:
         if 'conn' in locals():
