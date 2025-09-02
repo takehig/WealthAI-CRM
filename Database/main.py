@@ -4,15 +4,15 @@ Port: 8006
 機能: SQL実行、データベース管理、メンテナンス
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 import psycopg2
 import time
 import logging
+import json
 from typing import List, Dict, Any
 from datetime import datetime
 
@@ -36,10 +36,6 @@ app.add_middleware(
 
 # テンプレート設定
 templates = Jinja2Templates(directory="templates")
-
-# リクエストモデル
-class QueryRequest(BaseModel):
-    query: str
 
 def log_and_collect(message: str, logs: list):
     """OSログ出力とレスポンス用ログ収集を同時実行"""
@@ -227,12 +223,31 @@ async def database_management_ui():
         return HTMLResponse(content=f.read())
 
 @app.post("/execute")
-async def execute_query(request: QueryRequest):
+async def execute_query(request: Request):
     """SQLクエリを実行"""
     start_time = time.time()
     logs = []
     
-    log_and_collect(f"Query execution started: {request.query}", logs)
+    try:
+        # 生のリクエストボディを取得
+        raw_body = await request.body()
+        log_and_collect(f"Raw request received: {raw_body.decode()}", logs)
+        
+        # JSONパース
+        data = json.loads(raw_body)
+        log_and_collect(f"Parsed JSON: {data}", logs)
+        
+        # クエリ取得（queryまたはsqlフィールドに対応）
+        query = data.get("query") or data.get("sql")
+        if not query:
+            log_and_collect("ERROR: No query field found", logs)
+            return {
+                "success": False,
+                "error": "Query field required (query or sql)",
+                "logs": logs
+            }
+        
+        log_and_collect(f"Query execution started: {query}", logs)
     
     try:
         log_and_collect("Attempting database connection...", logs)
@@ -249,11 +264,11 @@ async def execute_query(request: QueryRequest):
         log_and_collect("✅ Database connection successful", logs)
         
         cursor = conn.cursor()
-        log_and_collect(f"Executing query: {request.query}", logs)
-        cursor.execute(request.query)
+        log_and_collect(f"Executing query: {query}", logs)
+        cursor.execute(query)
         
         # SELECT文の場合は結果を取得
-        if request.query.strip().upper().startswith('SELECT'):
+        if query.strip().upper().startswith('SELECT'):
             results = cursor.fetchall()
             columns = [desc[0] for desc in cursor.description]
             
