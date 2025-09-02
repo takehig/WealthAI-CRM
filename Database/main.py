@@ -268,8 +268,11 @@ async def execute_query(request: QueryRequest):
     
     try:
         conn = psycopg2.connect(
+            host="localhost",
             database="wealthai",
-            user="ec2-user"
+            user="wealthai_user",
+            password="wealthai123",
+            port=5432
         )
         
         cursor = conn.cursor()
