@@ -248,8 +248,7 @@ async def execute_query(request: Request):
             }
         
         log_and_collect(f"Query execution started: {query}", logs)
-    
-    try:
+        
         log_and_collect("Attempting database connection...", logs)
         log_and_collect("Host: localhost, Database: wealthai, User: wealthai_user", logs)
         
