@@ -124,15 +124,6 @@ async def customer_detail(request: Request, customer_id: int, db: Session = Depe
         "cash_inflows": cash_inflows
     })
 
-@app.get("/products", response_class=HTMLResponse)
-async def products_list(request: Request, db: Session = Depends(get_db)):
-    """商品一覧"""
-    products = db.query(Product).filter(Product.is_active == True).all()
-    return templates.TemplateResponse("products.html", {
-        "request": request,
-        "products": products
-    })
-
 @app.get("/holdings", response_class=HTMLResponse)
 async def holdings_list(request: Request, db: Session = Depends(get_db)):
     """保有商品一覧"""
