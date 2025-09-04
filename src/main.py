@@ -67,6 +67,39 @@ async def customers_list(request: Request, db: Session = Depends(get_db)):
         "customers": customers
     })
 
+@app.get("/api/customers")
+async def get_customers_api(db: Session = Depends(get_db)):
+    """顧客一覧API"""
+    try:
+        customers = db.query(Customer).join(SalesRepresentative).all()
+        
+        customer_list = []
+        for customer in customers:
+            customer_list.append({
+                "customer_id": customer.customer_id,
+                "customer_name": customer.customer_name,
+                "email": customer.email,
+                "phone": customer.phone,
+                "address": customer.address,
+                "registration_date": customer.registration_date.isoformat() if customer.registration_date else None,
+                "customer_type": customer.customer_type,
+                "risk_tolerance": customer.risk_tolerance,
+                "sales_rep_name": customer.sales_representative.name if customer.sales_representative else None
+            })
+        
+        return {
+            "status": "success",
+            "total_customers": len(customer_list),
+            "customers": customer_list
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e),
+            "customers": []
+        }
+
 @app.get("/customers/{customer_id}", response_class=HTMLResponse)
 async def customer_detail(request: Request, customer_id: int, db: Session = Depends(get_db)):
     """顧客詳細"""
