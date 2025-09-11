@@ -1,29 +1,30 @@
 """
-データベース管理システム
+データベース管理システム v2.0.0
 Port: 8006
-機能: SQL実行、データベース管理、メンテナンス
+機能: 複数データベース対応SQL実行、データベース管理、メンテナンス
 """
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 import psycopg2
+from psycopg2.extras import RealDictCursor
 import time
 import logging
 import json
 from typing import List, Dict, Any
 from datetime import datetime
+import uvicorn
+
+from config import DATABASES, SERVER_CONFIG
 
 # ログ設定
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-from psycopg2.extras import RealDictCursor
-from datetime import datetime
-import logging
 
-app = FastAPI(title="Database Management System", version="1.0.0")
+app = FastAPI(title=SERVER_CONFIG["title"], version=SERVER_CONFIG["version"])
 
 # CORS設定
 app.add_middleware(
@@ -37,154 +38,163 @@ app.add_middleware(
 # テンプレート設定
 templates = Jinja2Templates(directory="templates")
 
-def log_and_collect(message: str, logs: list):
-    """OSログ出力とレスポンス用ログ収集を同時実行"""
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    log_message = f"[DATABASE] {message}"
+def get_db_connection(database_key: str):
+    """指定されたデータベースへの接続を取得"""
+    if database_key not in DATABASES:
+        raise HTTPException(status_code=400, detail=f"Invalid database: {database_key}")
     
-    # OSログ出力
-    logger.info(log_message)
-    
-    # レスポンス用ログ収集
-    logs.append(f"[{timestamp}] {message}")
-    
-    return log_message
-
-# ログ設定
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-def get_db_connection():
-    """データベース接続"""
+    db_config = DATABASES[database_key]
     try:
         conn = psycopg2.connect(
-            host="localhost",
-            database="crm_db", 
-            user="crm_user",
-            password="crm_password"
+            host=db_config['host'],
+            port=db_config['port'],
+            database=db_config['database'],
+            user=db_config['user'],
+            password=db_config['password']
         )
         return conn
     except Exception as e:
-        logger.error(f"Database connection failed: {e}")
-        raise HTTPException(status_code=500, detail="Database connection failed")
+        logger.error(f"Database connection failed for {database_key}: {e}")
+        raise HTTPException(status_code=500, detail=f"Database connection failed: {e}")
 
 @app.get("/", response_class=HTMLResponse)
-async def database_management_ui():
-    """データベース管理画面を表示"""
-    with open("templates/index.html", "r", encoding="utf-8") as f:
-        return HTMLResponse(content=f.read())
+async def index(request: Request):
+    """メイン画面"""
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "databases": DATABASES,
+        "version": SERVER_CONFIG["version"]
+    })
 
-@app.post("/execute")
-async def execute_query(request: Request):
-    """SQLクエリを実行"""
-    start_time = time.time()
-    logs = []
-    
+@app.post("/api/execute")
+async def execute_sql(database: str = Form(...), query: str = Form(...)):
+    """SQL実行API"""
     try:
-        # 生のリクエストボディを取得
-        raw_body = await request.body()
-        log_and_collect(f"Raw request received: {raw_body.decode()}", logs)
+        # データベース接続
+        conn = get_db_connection(database)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
         
-        # JSONパース
-        data = json.loads(raw_body)
-        log_and_collect(f"Parsed JSON: {data}", logs)
-        
-        # クエリ取得（queryまたはsqlフィールドに対応）
-        query = data.get("query") or data.get("sql")
-        if not query:
-            log_and_collect("ERROR: No query field found", logs)
-            return {
-                "success": False,
-                "error": "Query field required (query or sql)",
-                "logs": logs
-            }
-        
-        log_and_collect(f"Query execution started: {query}", logs)
-        
-        log_and_collect("Attempting database connection...", logs)
-        log_and_collect("Host: localhost, Database: wealthai, User: wealthai_user", logs)
-        
-        conn = psycopg2.connect(
-            host="localhost",
-            database="wealthai",
-            user="wealthai_user",
-            password="wealthai123",
-            port=5432
-        )
-        
-        log_and_collect("✅ Database connection successful", logs)
-        
-        cursor = conn.cursor()
-        log_and_collect(f"Executing query: {query}", logs)
+        # クエリ実行
+        start_time = time.time()
         cursor.execute(query)
+        execution_time = time.time() - start_time
         
-        # SELECT文の場合は結果を取得
-        if query.strip().upper().startswith('SELECT'):
+        # 結果取得
+        if cursor.description:
+            # SELECT系クエリ
             results = cursor.fetchall()
             columns = [desc[0] for desc in cursor.description]
-            
-            log_and_collect(f"Found {len(results)} rows, {len(columns)} columns", logs)
             
             # 辞書形式に変換
             data = []
             for row in results:
-                data.append(dict(zip(columns, row)))
-            
-            execution_time = round((time.time() - start_time) * 1000, 2)
-            log_and_collect(f"Execution completed in {execution_time}ms", logs)
-            
-            return {
-                "success": True,
+                data.append(dict(row))
+                
+            response = {
+                "status": "success",
+                "type": "select",
+                "columns": columns,
                 "data": data,
-                "execution_time": execution_time,
-                "message": f"{len(data)}件のレコードを取得しました",
-                "logs": logs
+                "row_count": len(data),
+                "execution_time": round(execution_time, 3),
+                "database": DATABASES[database]['name']
             }
         else:
-            # INSERT/UPDATE/DELETE等の場合
+            # INSERT/UPDATE/DELETE系クエリ
             conn.commit()
-            execution_time = round((time.time() - start_time) * 1000, 2)
-            log_and_collect(f"Transaction committed, affected rows: {cursor.rowcount}", logs)
-            log_and_collect(f"Execution completed in {execution_time}ms", logs)
-            
-            return {
-                "success": True,
-                "data": [],
-                "execution_time": execution_time,
-                "message": f"クエリが正常に実行されました（影響行数: {cursor.rowcount}）",
-                "logs": logs
+            response = {
+                "status": "success", 
+                "type": "modify",
+                "affected_rows": cursor.rowcount,
+                "execution_time": round(execution_time, 3),
+                "database": DATABASES[database]['name']
             }
             
+        cursor.close()
+        conn.close()
+        
+        return response
+        
     except Exception as e:
-        import traceback
-        error_detail = traceback.format_exc()
-        execution_time = round((time.time() - start_time) * 1000, 2)
+        logger.error(f"SQL execution error: {e}")
+        return {
+            "status": "error",
+            "error": str(e),
+            "database": DATABASES.get(database, {}).get('name', database)
+        }
+
+@app.get("/api/tables/{database}")
+async def get_tables(database: str):
+    """テーブル一覧取得API"""
+    try:
+        conn = get_db_connection(database)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
         
-        log_and_collect(f"❌ Exception occurred: {str(e)}", logs)
-        log_and_collect(f"Error type: {type(e).__name__}", logs)
-        log_and_collect(f"Execution failed after {execution_time}ms", logs)
+        cursor.execute("""
+            SELECT table_name, table_type
+            FROM information_schema.tables 
+            WHERE table_schema = 'public'
+            ORDER BY table_name
+        """)
         
-        # OSログにもエラー詳細を出力
-        logger.error(f"[DATABASE] SQL execution error: {str(e)}")
-        logger.error(f"[DATABASE] Error detail: {error_detail}")
+        tables = cursor.fetchall()
+        cursor.close()
+        conn.close()
         
         return {
-            "success": False,
-            "error": str(e),
-            "error_detail": error_detail,
-            "execution_time": execution_time,
-            "logs": logs
+            "status": "success",
+            "tables": [dict(table) for table in tables],
+            "database": DATABASES[database]['name']
         }
-    finally:
-        if 'conn' in locals():
-            conn.close()
-            log_and_collect("Database connection closed", logs)
+        
+    except Exception as e:
+        logger.error(f"Tables fetch error: {e}")
+        return {
+            "status": "error",
+            "error": str(e)
+        }
+
+@app.get("/api/schema/{database}/{table}")
+async def get_table_schema(database: str, table: str):
+    """テーブルスキーマ取得API"""
+    try:
+        conn = get_db_connection(database)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cursor.execute("""
+            SELECT column_name, data_type, is_nullable, column_default
+            FROM information_schema.columns 
+            WHERE table_schema = 'public' AND table_name = %s
+            ORDER BY ordinal_position
+        """, (table,))
+        
+        columns = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        return {
+            "status": "success",
+            "columns": [dict(col) for col in columns],
+            "table": table,
+            "database": DATABASES[database]['name']
+        }
+        
+    except Exception as e:
+        logger.error(f"Schema fetch error: {e}")
+        return {
+            "status": "error",
+            "error": str(e)
+        }
 
 @app.get("/health")
-async def health_check():
+async def health():
     """ヘルスチェック"""
-    return {"status": "healthy", "service": "Database Management", "timestamp": datetime.now().isoformat()}
+    return {
+        "status": "healthy",
+        "service": "Database-Management",
+        "version": SERVER_CONFIG["version"],
+        "databases": list(DATABASES.keys())
+    }
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8006)
+    uvicorn.run(app, host="0.0.0.0", port=SERVER_CONFIG["port"])
