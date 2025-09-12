@@ -1,4 +1,6 @@
 from typing import Optional, List
+from datetime import datetime, date
+from pydantic import BaseModel
 
 """
 WealthAI CRM データ参照アプリケーション
@@ -15,6 +17,49 @@ from models.database import get_db, Customer, SalesRepresentative, Product, Hold
 from typing import List
 import os
 from pathlib import Path
+
+# Pydantic モデル
+class CustomerCreate(BaseModel):
+    customer_code: str
+    name: str
+    name_kana: Optional[str] = None
+    birth_date: Optional[date] = None
+    occupation: Optional[str] = None
+    annual_income: Optional[float] = None
+    net_worth: Optional[float] = None
+    risk_tolerance: Optional[int] = None
+    investment_experience: Optional[str] = None
+    sales_rep: Optional[str] = None
+
+class CustomerUpdate(BaseModel):
+    customer_code: Optional[str] = None
+    name: Optional[str] = None
+    name_kana: Optional[str] = None
+    birth_date: Optional[date] = None
+    occupation: Optional[str] = None
+    annual_income: Optional[float] = None
+    net_worth: Optional[float] = None
+    risk_tolerance: Optional[int] = None
+    investment_experience: Optional[str] = None
+    sales_rep: Optional[str] = None
+
+class HoldingCreate(BaseModel):
+    customer_id: int
+    product_id: int
+    quantity: float
+    purchase_price: float
+    current_price: Optional[float] = None
+    purchase_date: date
+    maturity_date: Optional[date] = None
+
+class HoldingUpdate(BaseModel):
+    customer_id: Optional[int] = None
+    product_id: Optional[int] = None
+    quantity: Optional[float] = None
+    purchase_price: Optional[float] = None
+    current_price: Optional[float] = None
+    purchase_date: Optional[date] = None
+    maturity_date: Optional[date] = None
 
 # FastAPIアプリケーション初期化
 app = FastAPI(title="WealthAI CRM", description="ウェルスマネジメント向けCRMデータ参照システム")
@@ -128,10 +173,104 @@ async def customer_detail(request: Request, customer_id: int, db: Session = Depe
 async def holdings_list(request: Request, db: Session = Depends(get_db)):
     """保有商品一覧"""
     holdings = db.query(Holding).join(Customer).join(Product).filter(Holding.status == 'active').all()
+    customers = db.query(Customer).all()
+    products = db.query(Product).all()
     return templates.TemplateResponse("holdings.html", {
         "request": request,
-        "holdings": holdings
+        "holdings": holdings,
+        "customers": customers,
+        "products": products
     })
+
+# 顧客 CRUD API
+@app.get("/api/customers")
+async def get_customers_api(db: Session = Depends(get_db)):
+    """顧客一覧API"""
+    customers = db.query(Customer).all()
+    return customers
+
+@app.get("/api/customers/{customer_id}")
+async def get_customer_api(customer_id: int, db: Session = Depends(get_db)):
+    """顧客詳細API"""
+    customer = db.query(Customer).filter(Customer.customer_id == customer_id).first()
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    return customer
+
+@app.post("/api/customers")
+async def create_customer_api(customer_data: CustomerCreate, db: Session = Depends(get_db)):
+    """顧客作成API"""
+    # 顧客コード重複チェック
+    existing = db.query(Customer).filter(Customer.customer_code == customer_data.customer_code).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Customer code already exists")
+    
+    customer = Customer(**customer_data.dict())
+    db.add(customer)
+    db.commit()
+    db.refresh(customer)
+    return customer
+
+@app.put("/api/customers/{customer_id}")
+async def update_customer_api(customer_id: int, customer_data: CustomerUpdate, db: Session = Depends(get_db)):
+    """顧客更新API"""
+    customer = db.query(Customer).filter(Customer.customer_id == customer_id).first()
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    # 更新データの適用
+    update_data = customer_data.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(customer, field, value)
+    
+    db.commit()
+    db.refresh(customer)
+    return customer
+
+# 保有商品 CRUD API
+@app.get("/api/holdings")
+async def get_holdings_api(db: Session = Depends(get_db)):
+    """保有商品一覧API"""
+    holdings = db.query(Holding).join(Customer).join(Product).all()
+    return holdings
+
+@app.get("/api/holdings/{holding_id}")
+async def get_holding_api(holding_id: int, db: Session = Depends(get_db)):
+    """保有商品詳細API"""
+    holding = db.query(Holding).filter(Holding.holding_id == holding_id).first()
+    if not holding:
+        raise HTTPException(status_code=404, detail="Holding not found")
+    return holding
+
+@app.post("/api/holdings")
+async def create_holding_api(holding_data: HoldingCreate, db: Session = Depends(get_db)):
+    """保有商品作成API"""
+    holding = Holding(**holding_data.dict())
+    holding.status = 'active'
+    holding.current_value = holding.quantity * (holding.current_price or holding.purchase_price)
+    db.add(holding)
+    db.commit()
+    db.refresh(holding)
+    return holding
+
+@app.put("/api/holdings/{holding_id}")
+async def update_holding_api(holding_id: int, holding_data: HoldingUpdate, db: Session = Depends(get_db)):
+    """保有商品更新API"""
+    holding = db.query(Holding).filter(Holding.holding_id == holding_id).first()
+    if not holding:
+        raise HTTPException(status_code=404, detail="Holding not found")
+    
+    # 更新データの適用
+    update_data = holding_data.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(holding, field, value)
+    
+    # 現在価値を再計算
+    holding.current_value = holding.quantity * (holding.current_price or holding.purchase_price)
+    
+    db.commit()
+    db.refresh(holding)
+    return holding
 
 @app.get("/sales-notes", response_class=HTMLResponse)
 async def sales_notes_list(request: Request, db: Session = Depends(get_db)):

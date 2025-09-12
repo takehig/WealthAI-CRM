@@ -4,50 +4,404 @@
 {% block header %}顧客一覧{% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th>顧客コード</th>
-                        <th>氏名</th>
-                        <th>年齢</th>
-                        <th>職業</th>
-                        <th>年収</th>
-                        <th>純資産</th>
-                        <th>リスク許容度</th>
-                        <th>投資経験</th>
-                        <th>担当営業</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for customer in customers %}
-                    <tr>
-                        <td><strong>{{ customer.customer_code }}</strong></td>
-                        <td>
-                            <div>
-                                <strong>{{ customer.name }}</strong>
-                                <br><small class="text-muted">{{ customer.name_kana }}</small>
+<style>
+    .main-content {
+        height: calc(100vh - 120px);
+        overflow-y: auto;
+    }
+    .table-container {
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+</style>
+
+<div class="main-content">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">顧客管理</h5>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+                <i class="fas fa-plus"></i> 新規顧客追加
+            </button>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-container">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th>顧客コード</th>
+                            <th>氏名</th>
+                            <th>年齢</th>
+                            <th>職業</th>
+                            <th>年収</th>
+                            <th>純資産</th>
+                            <th>リスク許容度</th>
+                            <th>投資経験</th>
+                            <th>担当営業</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr>
+                            <td><strong>{{ customer.customer_code }}</strong></td>
+                            <td>
+                                <div>
+                                    <strong>{{ customer.name }}</strong>
+                                    <br><small class="text-muted">{{ customer.name_kana }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                {% if customer.birth_date %}
+                                    {% set age = (2025 - customer.birth_date.year) %}
+                                    {{ age }}歳
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>{{ customer.occupation or '-' }}</td>
+                            <td>
+                                {% if customer.annual_income %}
+                                    ¥{{ "{:,.0f}".format(customer.annual_income) }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if customer.net_worth %}
+                                    ¥{{ "{:,.0f}".format(customer.net_worth) }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if customer.risk_tolerance %}
+                                    {% if customer.risk_tolerance <= 2 %}
+                                        <span class="badge bg-success">{{ customer.risk_tolerance }}</span>
+                                    {% elif customer.risk_tolerance <= 3 %}
+                                        <span class="badge bg-warning">{{ customer.risk_tolerance }}</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">{{ customer.risk_tolerance }}</span>
+                                    {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>{{ customer.investment_experience or '-' }}</td>
+                            <td>{{ customer.sales_rep or '-' }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="editCustomer({{ customer.customer_id }})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <a href="/customers/{{ customer.customer_id }}" class="btn btn-sm btn-outline-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 新規顧客追加モーダル -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">新規顧客追加</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addCustomerForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">顧客コード *</label>
+                                <input type="text" class="form-control" name="customer_code" required>
                             </div>
-                        </td>
-                        <td>
-                            {% if customer.birth_date %}
-                                {% set age = (2025 - customer.birth_date.year) %}
-                                {{ age }}歳
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                        <td>{{ customer.occupation or '-' }}</td>
-                        <td>
-                            {% if customer.annual_income %}
-                                ¥{{ "{:,.0f}".format(customer.annual_income) }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">氏名 *</label>
+                                <input type="text" class="form-control" name="name" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">氏名（カナ）</label>
+                                <input type="text" class="form-control" name="name_kana">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">生年月日</label>
+                                <input type="date" class="form-control" name="birth_date">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">職業</label>
+                                <input type="text" class="form-control" name="occupation">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">年収</label>
+                                <input type="number" class="form-control" name="annual_income">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">純資産</label>
+                                <input type="number" class="form-control" name="net_worth">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">リスク許容度</label>
+                                <select class="form-select" name="risk_tolerance">
+                                    <option value="">選択してください</option>
+                                    <option value="1">1 - 保守的</option>
+                                    <option value="2">2 - やや保守的</option>
+                                    <option value="3">3 - 中程度</option>
+                                    <option value="4">4 - やや積極的</option>
+                                    <option value="5">5 - 積極的</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">投資経験</label>
+                                <select class="form-select" name="investment_experience">
+                                    <option value="">選択してください</option>
+                                    <option value="初心者">初心者</option>
+                                    <option value="経験者">経験者</option>
+                                    <option value="上級者">上級者</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">担当営業</label>
+                                <input type="text" class="form-control" name="sales_rep">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <button type="submit" class="btn btn-primary">追加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 顧客編集モーダル -->
+<div class="modal fade" id="editCustomerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">顧客情報編集</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editCustomerForm">
+                <input type="hidden" id="editCustomerId" name="customer_id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">顧客コード *</label>
+                                <input type="text" class="form-control" id="editCustomerCode" name="customer_code" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">氏名 *</label>
+                                <input type="text" class="form-control" id="editName" name="name" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">氏名（カナ）</label>
+                                <input type="text" class="form-control" id="editNameKana" name="name_kana">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">生年月日</label>
+                                <input type="date" class="form-control" id="editBirthDate" name="birth_date">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">職業</label>
+                                <input type="text" class="form-control" id="editOccupation" name="occupation">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">年収</label>
+                                <input type="number" class="form-control" id="editAnnualIncome" name="annual_income">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">純資産</label>
+                                <input type="number" class="form-control" id="editNetWorth" name="net_worth">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">リスク許容度</label>
+                                <select class="form-select" id="editRiskTolerance" name="risk_tolerance">
+                                    <option value="">選択してください</option>
+                                    <option value="1">1 - 保守的</option>
+                                    <option value="2">2 - やや保守的</option>
+                                    <option value="3">3 - 中程度</option>
+                                    <option value="4">4 - やや積極的</option>
+                                    <option value="5">5 - 積極的</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">投資経験</label>
+                                <select class="form-select" id="editInvestmentExperience" name="investment_experience">
+                                    <option value="">選択してください</option>
+                                    <option value="初心者">初心者</option>
+                                    <option value="経験者">経験者</option>
+                                    <option value="上級者">上級者</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">担当営業</label>
+                                <input type="text" class="form-control" id="editSalesRep" name="sales_rep">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <button type="submit" class="btn btn-primary">更新</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// 新規顧客追加
+document.getElementById('addCustomerForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const customerData = Object.fromEntries(formData.entries());
+    
+    try {
+        const response = await fetch('/api/customers', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(customerData)
+        });
+        
+        if (response.ok) {
+            alert('顧客を追加しました');
+            location.reload();
+        } else {
+            const error = await response.json();
+            alert('追加に失敗しました: ' + (error.detail || '不明なエラー'));
+        }
+    } catch (error) {
+        alert('追加に失敗しました: ' + error.message);
+    }
+});
+
+// 顧客編集
+async function editCustomer(customerId) {
+    try {
+        const response = await fetch(`/api/customers/${customerId}`);
+        if (!response.ok) {
+            throw new Error('顧客情報の取得に失敗しました');
+        }
+        
+        const customer = await response.json();
+        
+        // フォームに既存データを設定
+        document.getElementById('editCustomerId').value = customer.customer_id;
+        document.getElementById('editCustomerCode').value = customer.customer_code || '';
+        document.getElementById('editName').value = customer.name || '';
+        document.getElementById('editNameKana').value = customer.name_kana || '';
+        document.getElementById('editBirthDate').value = customer.birth_date || '';
+        document.getElementById('editOccupation').value = customer.occupation || '';
+        document.getElementById('editAnnualIncome').value = customer.annual_income || '';
+        document.getElementById('editNetWorth').value = customer.net_worth || '';
+        document.getElementById('editRiskTolerance').value = customer.risk_tolerance || '';
+        document.getElementById('editInvestmentExperience').value = customer.investment_experience || '';
+        document.getElementById('editSalesRep').value = customer.sales_rep || '';
+        
+        // モーダル表示
+        new bootstrap.Modal(document.getElementById('editCustomerModal')).show();
+    } catch (error) {
+        alert('顧客情報の取得に失敗しました: ' + error.message);
+    }
+}
+
+// 顧客更新
+document.getElementById('editCustomerForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const customerData = Object.fromEntries(formData.entries());
+    const customerId = customerData.customer_id;
+    delete customerData.customer_id;
+    
+    try {
+        const response = await fetch(`/api/customers/${customerId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(customerData)
+        });
+        
+        if (response.ok) {
+            alert('顧客情報を更新しました');
+            location.reload();
+        } else {
+            const error = await response.json();
+            alert('更新に失敗しました: ' + (error.detail || '不明なエラー'));
+        }
+    } catch (error) {
+        alert('更新に失敗しました: ' + error.message);
+    }
+});
+</script>
+{% endblock %}
                         <td>
                             {% if customer.net_worth %}
                                 ¥{{ "{:,.0f}".format(customer.net_worth) }}
