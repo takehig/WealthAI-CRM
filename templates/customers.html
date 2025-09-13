@@ -396,6 +396,13 @@ document.getElementById('editCustomerForm').addEventListener('submit', async fun
     const customerId = customerData.customer_id;
     delete customerData.customer_id;
     
+    // 空文字列をnullに変換
+    Object.keys(customerData).forEach(key => {
+        if (customerData[key] === '') {
+            customerData[key] = null;
+        }
+    });
+    
     try {
         const response = await fetch(`/api/customers/${customerId}`, {
             method: 'PUT',
@@ -406,11 +413,23 @@ document.getElementById('editCustomerForm').addEventListener('submit', async fun
         });
         
         if (response.ok) {
+            const result = await response.json();
             alert('顧客情報を更新しました');
             location.reload();
         } else {
-            const error = await response.json();
-            alert('更新に失敗しました: ' + (error.detail || '不明なエラー'));
+            // エラーレスポンスの詳細取得
+            const contentType = response.headers.get('content-type');
+            let errorMessage = '更新に失敗しました';
+            
+            if (contentType && contentType.includes('application/json')) {
+                const error = await response.json();
+                errorMessage += ': ' + (error.detail || '不明なエラー');
+            } else {
+                const errorText = await response.text();
+                errorMessage += ': ' + errorText;
+            }
+            
+            alert(errorMessage);
         }
     } catch (error) {
         alert('更新に失敗しました: ' + error.message);

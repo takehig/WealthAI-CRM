@@ -199,18 +199,23 @@ async def create_customer_api(customer_data: CustomerCreate, db: Session = Depen
 @app.put("/api/customers/{customer_id}")
 async def update_customer_api(customer_id: int, customer_data: CustomerUpdate, db: Session = Depends(get_db)):
     """顧客更新API"""
-    customer = db.query(Customer).filter(Customer.customer_id == customer_id).first()
-    if not customer:
-        raise HTTPException(status_code=404, detail="Customer not found")
-    
-    # 更新データの適用
-    update_data = customer_data.dict(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(customer, field, value)
-    
-    db.commit()
-    db.refresh(customer)
-    return customer
+    try:
+        customer = db.query(Customer).filter(Customer.customer_id == customer_id).first()
+        if not customer:
+            raise HTTPException(status_code=404, detail="Customer not found")
+        
+        # 更新データの適用（安全な方法）
+        update_data = customer_data.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            if hasattr(customer, field):
+                setattr(customer, field, value)
+        
+        db.commit()
+        db.refresh(customer)
+        return customer
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Update failed: {str(e)}")
 
 # 保有商品 CRUD API
 @app.get("/api/holdings")
