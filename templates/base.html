@@ -64,6 +64,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link {% if request.url.path == '/products' %}active{% endif %}" href="/products">
+                                <i class="fas fa-box me-2"></i>商品管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link {% if request.url.path == '/sales-notes' %}active{% endif %}" href="/sales-notes">
                                 <i class="fas fa-sticky-note me-2"></i>営業メモ
                             </a>
@@ -87,6 +92,7 @@
                 <div class="pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">{% block header %}{% endblock %}</h1>
                 </div>
+                
                 {% block content %}{% endblock %}
             </main>
         </div>
