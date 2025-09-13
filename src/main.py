@@ -216,31 +216,13 @@ async def update_customer_api(customer_id: int, customer_data: CustomerUpdate, d
                 continue
                 
             if hasattr(customer, field) and value is not None:
-                # データ型変換処理
+                # データ型変換処理（シンプル化）
                 if field == 'sales_rep_id' and isinstance(value, str):
                     # 外部キーは整数に変換（空文字列はNoneに）
                     value = int(value) if value.strip() else None
                 elif field in ['annual_income', 'net_worth'] and isinstance(value, str):
                     # 数値フィールドは整数に変換（空文字列はNoneに）
                     value = int(value) if value.strip() else None
-                elif field == 'risk_tolerance' and isinstance(value, str):
-                    # リスク許容度のマッピング（UI値→DB値）
-                    risk_mapping = {
-                        '1': 'conservative',
-                        '2': 'moderate_conservative', 
-                        '3': 'moderate',
-                        '4': 'moderate_aggressive',
-                        '5': 'aggressive'
-                    }
-                    value = risk_mapping.get(value, value)
-                elif field == 'investment_experience' and isinstance(value, str):
-                    # 投資経験のマッピング（UI値→DB値）
-                    experience_mapping = {
-                        '初心者': 'beginner',
-                        '経験者': 'experienced',
-                        '上級者': 'expert'
-                    }
-                    value = experience_mapping.get(value, value)
                 
                 setattr(customer, field, value)
         
