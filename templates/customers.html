@@ -23,7 +23,7 @@
                         <th>年収</th>
                         <th>純資産</th>
                         <th>リスク許容度</th>
-                        <th>投資経験</th>
+                        <th>担当営業</th>
                         <th>操作</th>
                     </tr>
                 </thead>
@@ -77,6 +77,14 @@
                             {% endif %}
                         </td>
                         <td>{{ customer.investment_experience or "-" }}</td>
+                        <td>
+                            {% if customer.sales_rep %}
+                                {{ customer.sales_rep.name }}
+                                <br><small class="text-muted">{{ customer.sales_rep.rep_code }}</small>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
                         <td>
                             <div class="btn-group" role="group">
                                 <button type="button" class="btn btn-sm btn-outline-primary" onclick="editCustomer({{ customer.customer_id }})">
@@ -183,7 +191,12 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">担当営業</label>
-                                <input type="text" class="form-control" name="sales_rep">
+                                <select class="form-select" name="sales_rep_id">
+                                    <option value="">選択してください</option>
+                                    {% for rep in sales_reps %}
+                                    <option value="{{ rep.rep_id }}">{{ rep.name }} ({{ rep.rep_code }})</option>
+                                    {% endfor %}
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -286,7 +299,12 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">担当営業</label>
-                                <input type="text" class="form-control" id="editSalesRep" name="sales_rep">
+                                <select class="form-select" id="editSalesRep" name="sales_rep_id">
+                                    <option value="">選択してください</option>
+                                    {% for rep in sales_reps %}
+                                    <option value="{{ rep.rep_id }}">{{ rep.name }} ({{ rep.rep_code }})</option>
+                                    {% endfor %}
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -365,7 +383,7 @@ async function editCustomer(customerId) {
         const investmentExperienceSelect = document.getElementById('editInvestmentExperience');
         investmentExperienceSelect.value = customer.investment_experience || '';
         
-        // 担当営業の設定（sales_rep_idから取得）
+        // 担当営業の設定（sales_rep_idを使用）
         document.getElementById('editSalesRep').value = customer.sales_rep_id || '';
         
         // モーダル表示

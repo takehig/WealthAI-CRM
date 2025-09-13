@@ -116,9 +116,11 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
 async def customers_list(request: Request, db: Session = Depends(get_db)):
     """顧客一覧"""
     customers = db.query(Customer).all()
+    sales_reps = db.query(SalesRepresentative).all()
     return templates.TemplateResponse("customers.html", {
         "request": request,
-        "customers": customers
+        "customers": customers,
+        "sales_reps": sales_reps
     })
 
 @app.get("/customers/{customer_id}", response_class=HTMLResponse)
