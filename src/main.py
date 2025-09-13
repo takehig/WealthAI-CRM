@@ -204,9 +204,17 @@ async def update_customer_api(customer_id: int, customer_data: CustomerUpdate, d
         if not customer:
             raise HTTPException(status_code=404, detail="Customer not found")
         
-        # 更新データの適用（データ型変換対応）
+        # 更新データの適用（リレーションフィールド除外）
         update_data = customer_data.dict(exclude_unset=True)
+        
+        # SQLAlchemyリレーションフィールドを除外
+        relation_fields = ['sales_rep', 'holdings', 'sales_notes', 'cash_inflows']
+        
         for field, value in update_data.items():
+            # リレーションフィールドをスキップ
+            if field in relation_fields:
+                continue
+                
             if hasattr(customer, field) and value is not None:
                 # データ型変換処理
                 if field == 'sales_rep_id' and isinstance(value, str):
