@@ -5,6 +5,12 @@
 
 {% block content %}
 <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">顧客管理</h5>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+            <i class="fas fa-plus"></i> 新規顧客追加
+        </button>
+    </div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-hover">
@@ -72,14 +78,92 @@
                         </td>
                         <td>{{ customer.investment_experience or "-" }}</td>
                         <td>
-                            <a href="/customers/{{ customer.customer_id }}" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-eye"></i> 詳細
-                            </a>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="editCustomer({{ customer.customer_id }})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <a href="/customers/{{ customer.customer_id }}" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- 新規顧客追加モーダル -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">新規顧客追加</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addCustomerForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">顧客コード *</label>
+                        <input type="text" class="form-control" name="customer_code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">氏名 *</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">氏名（カナ）</label>
+                        <input type="text" class="form-control" name="name_kana">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">職業</label>
+                        <input type="text" class="form-control" name="occupation">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <button type="submit" class="btn btn-primary">追加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 顧客編集モーダル -->
+<div class="modal fade" id="editCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">顧客情報編集</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editCustomerForm">
+                <input type="hidden" id="editCustomerId" name="customer_id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">顧客コード *</label>
+                        <input type="text" class="form-control" id="editCustomerCode" name="customer_code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">氏名 *</label>
+                        <input type="text" class="form-control" id="editName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">氏名（カナ）</label>
+                        <input type="text" class="form-control" id="editNameKana" name="name_kana">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">職業</label>
+                        <input type="text" class="form-control" id="editOccupation" name="occupation">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <button type="submit" class="btn btn-primary">更新</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -90,4 +174,88 @@
         総顧客数: {{ customers|length }}名
     </p>
 </div>
+
+<script>
+// 新規顧客追加
+document.getElementById('addCustomerForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const customerData = Object.fromEntries(formData.entries());
+    
+    try {
+        const response = await fetch('/api/customers', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(customerData)
+        });
+        
+        if (response.ok) {
+            alert('顧客を追加しました');
+            location.reload();
+        } else {
+            const error = await response.json();
+            alert('追加に失敗しました: ' + (error.detail || '不明なエラー'));
+        }
+    } catch (error) {
+        alert('追加に失敗しました: ' + error.message);
+    }
+});
+
+// 顧客編集
+async function editCustomer(customerId) {
+    try {
+        const response = await fetch(`/api/customers/${customerId}`);
+        if (!response.ok) {
+            throw new Error('顧客情報の取得に失敗しました');
+        }
+        
+        const customer = await response.json();
+        
+        // フォームに既存データを設定
+        document.getElementById('editCustomerId').value = customer.customer_id;
+        document.getElementById('editCustomerCode').value = customer.customer_code || '';
+        document.getElementById('editName').value = customer.name || '';
+        document.getElementById('editNameKana').value = customer.name_kana || '';
+        document.getElementById('editOccupation').value = customer.occupation || '';
+        
+        // モーダル表示
+        new bootstrap.Modal(document.getElementById('editCustomerModal')).show();
+    } catch (error) {
+        alert('顧客情報の取得に失敗しました: ' + error.message);
+    }
+}
+
+// 顧客更新
+document.getElementById('editCustomerForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const customerData = Object.fromEntries(formData.entries());
+    const customerId = customerData.customer_id;
+    delete customerData.customer_id;
+    
+    try {
+        const response = await fetch(`/api/customers/${customerId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(customerData)
+        });
+        
+        if (response.ok) {
+            alert('顧客情報を更新しました');
+            location.reload();
+        } else {
+            const error = await response.json();
+            alert('更新に失敗しました: ' + (error.detail || '不明なエラー'));
+        }
+    } catch (error) {
+        alert('更新に失敗しました: ' + error.message);
+    }
+});
+</script>
 {% endblock %}

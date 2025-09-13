@@ -5,6 +5,12 @@
 
 {% block content %}
 <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">保有商品管理</h5>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addHoldingModal">
+            <i class="fas fa-plus"></i> 新規保有商品追加
+        </button>
+    </div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-hover">
@@ -20,6 +26,7 @@
                         <th>損益</th>
                         <th>満期日</th>
                         <th>購入日</th>
+                        <th>操作</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -110,10 +117,94 @@
                                 -
                             {% endif %}
                         </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="editHolding({{ holding.holding_id }})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- 新規保有商品追加モーダル -->
+<div class="modal fade" id="addHoldingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">新規保有商品追加</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addHoldingForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">顧客 *</label>
+                        <select class="form-select" name="customer_id" required>
+                            <option value="">顧客を選択</option>
+                            {% for customer in customers %}
+                            <option value="{{ customer.customer_id }}">{{ customer.name }} ({{ customer.customer_code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">商品 *</label>
+                        <select class="form-select" name="product_id" required>
+                            <option value="">商品を選択</option>
+                            {% for product in products %}
+                            <option value="{{ product.product_id }}">{{ product.product_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">数量 *</label>
+                        <input type="number" class="form-control" name="quantity" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">取得価格 *</label>
+                        <input type="number" class="form-control" name="purchase_price" step="0.01" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <button type="submit" class="btn btn-primary">追加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 保有商品編集モーダル -->
+<div class="modal fade" id="editHoldingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">保有商品編集</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editHoldingForm">
+                <input type="hidden" id="editHoldingId" name="holding_id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">数量 *</label>
+                        <input type="number" class="form-control" id="editQuantity" name="quantity" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">取得価格 *</label>
+                        <input type="number" class="form-control" id="editPurchasePrice" name="purchase_price" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">現在価格</label>
+                        <input type="number" class="form-control" id="editCurrentPrice" name="current_price" step="0.01">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <button type="submit" class="btn btn-primary">更新</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -124,4 +215,59 @@
         総保有商品数: {{ holdings|length }}件
     </p>
 </div>
+
+<script>
+// 保有商品編集
+async function editHolding(holdingId) {
+    try {
+        const response = await fetch(`/api/holdings/${holdingId}`);
+        if (!response.ok) {
+            throw new Error('保有商品情報の取得に失敗しました');
+        }
+        
+        const holding = await response.json();
+        
+        // フォームに既存データを設定
+        document.getElementById('editHoldingId').value = holding.holding_id;
+        document.getElementById('editQuantity').value = holding.quantity;
+        document.getElementById('editPurchasePrice').value = holding.purchase_price;
+        document.getElementById('editCurrentPrice').value = holding.current_price || '';
+        
+        // モーダル表示
+        new bootstrap.Modal(document.getElementById('editHoldingModal')).show();
+    } catch (error) {
+        alert('保有商品情報の取得に失敗しました: ' + error.message);
+    }
+}
+
+// 保有商品更新
+document.getElementById('editHoldingForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const holdingData = Object.fromEntries(formData.entries());
+    const holdingId = holdingData.holding_id;
+    delete holdingData.holding_id;
+    
+    try {
+        const response = await fetch(`/api/holdings/${holdingId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(holdingData)
+        });
+        
+        if (response.ok) {
+            alert('保有商品情報を更新しました');
+            location.reload();
+        } else {
+            const error = await response.json();
+            alert('更新に失敗しました: ' + (error.detail || '不明なエラー'));
+        }
+    } catch (error) {
+        alert('更新に失敗しました: ' + error.message);
+    }
+});
+</script>
 {% endblock %}
