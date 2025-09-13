@@ -357,23 +357,43 @@ async function editCustomer(customerId) {
         document.getElementById('editAnnualIncome').value = customer.annual_income || '';
         document.getElementById('editNetWorth').value = customer.net_worth || '';
         
-        // リスク許容度のマッピング
+        // リスク許容度のマッピング（全データ値対応）
         const riskToleranceSelect = document.getElementById('editRiskTolerance');
         const riskMapping = {
+            // 英語値
             'conservative': '1',
             'moderate_conservative': '2', 
             'moderate': '3',
             'moderate_aggressive': '4',
-            'aggressive': '5'
+            'aggressive': '5',
+            // 日本語値
+            '低': '1',
+            '中': '3', 
+            '高': '5',
+            // 数値文字列（そのまま）
+            '1': '1',
+            '2': '2',
+            '3': '3',
+            '4': '4',
+            '5': '5'
         };
         riskToleranceSelect.value = riskMapping[customer.risk_tolerance] || '';
         
-        // 投資経験のマッピング
+        // 投資経験のマッピング（全データ値対応）
         const investmentExperienceSelect = document.getElementById('editInvestmentExperience');
         const experienceMapping = {
+            // 英語値
             'beginner': '初心者',
+            'intermediate': '経験者',
             'experienced': '経験者',
-            'expert': '上級者'
+            'expert': '上級者',
+            // 日本語値（そのまま）
+            '初級': '初心者',
+            '中級': '経験者',
+            '上級': '上級者',
+            '初心者': '初心者',
+            '経験者': '経験者',
+            '上級者': '上級者'
         };
         investmentExperienceSelect.value = experienceMapping[customer.investment_experience] || '';
         
