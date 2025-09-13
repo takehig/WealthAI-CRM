@@ -345,9 +345,10 @@ async function editCustomer(customerId) {
         }
         
         const customer = await response.json();
+        console.log('Customer data:', customer); // デバッグ用
         
         // フォームに既存データを設定
-        document.getElementById('editCustomerId').value = customer.customer_id;
+        document.getElementById('editCustomerId').value = customer.customer_id || '';
         document.getElementById('editCustomerCode').value = customer.customer_code || '';
         document.getElementById('editName').value = customer.name || '';
         document.getElementById('editNameKana').value = customer.name_kana || '';
@@ -355,8 +356,16 @@ async function editCustomer(customerId) {
         document.getElementById('editOccupation').value = customer.occupation || '';
         document.getElementById('editAnnualIncome').value = customer.annual_income || '';
         document.getElementById('editNetWorth').value = customer.net_worth || '';
-        document.getElementById('editRiskTolerance').value = customer.risk_tolerance || '';
-        document.getElementById('editInvestmentExperience').value = customer.investment_experience || '';
+        
+        // リスク許容度の設定（文字列として処理）
+        const riskToleranceSelect = document.getElementById('editRiskTolerance');
+        riskToleranceSelect.value = customer.risk_tolerance ? String(customer.risk_tolerance) : '';
+        
+        // 投資経験の設定
+        const investmentExperienceSelect = document.getElementById('editInvestmentExperience');
+        investmentExperienceSelect.value = customer.investment_experience || '';
+        
+        // 担当営業の設定
         document.getElementById('editSalesRep').value = customer.sales_rep || '';
         
         // モーダル表示
