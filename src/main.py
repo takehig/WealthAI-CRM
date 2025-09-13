@@ -204,15 +204,44 @@ async def update_customer_api(customer_id: int, customer_data: CustomerUpdate, d
         if not customer:
             raise HTTPException(status_code=404, detail="Customer not found")
         
-        # 更新データの適用（安全な方法）
+        # 更新データの適用（データ型変換対応）
         update_data = customer_data.dict(exclude_unset=True)
         for field, value in update_data.items():
-            if hasattr(customer, field):
+            if hasattr(customer, field) and value is not None:
+                # データ型変換処理
+                if field == 'sales_rep_id' and isinstance(value, str):
+                    # 外部キーは整数に変換（空文字列はNoneに）
+                    value = int(value) if value.strip() else None
+                elif field in ['annual_income', 'net_worth'] and isinstance(value, str):
+                    # 数値フィールドは整数に変換（空文字列はNoneに）
+                    value = int(value) if value.strip() else None
+                elif field == 'risk_tolerance' and isinstance(value, str):
+                    # リスク許容度のマッピング（UI値→DB値）
+                    risk_mapping = {
+                        '1': 'conservative',
+                        '2': 'moderate_conservative', 
+                        '3': 'moderate',
+                        '4': 'moderate_aggressive',
+                        '5': 'aggressive'
+                    }
+                    value = risk_mapping.get(value, value)
+                elif field == 'investment_experience' and isinstance(value, str):
+                    # 投資経験のマッピング（UI値→DB値）
+                    experience_mapping = {
+                        '初心者': 'beginner',
+                        '経験者': 'experienced',
+                        '上級者': 'expert'
+                    }
+                    value = experience_mapping.get(value, value)
+                
                 setattr(customer, field, value)
         
         db.commit()
         db.refresh(customer)
         return customer
+    except ValueError as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Invalid data type: {str(e)}")
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Update failed: {str(e)}")
