@@ -357,16 +357,28 @@ async function editCustomer(customerId) {
         document.getElementById('editAnnualIncome').value = customer.annual_income || '';
         document.getElementById('editNetWorth').value = customer.net_worth || '';
         
-        // リスク許容度の設定（文字列として処理）
+        // リスク許容度のマッピング
         const riskToleranceSelect = document.getElementById('editRiskTolerance');
-        riskToleranceSelect.value = customer.risk_tolerance ? String(customer.risk_tolerance) : '';
+        const riskMapping = {
+            'conservative': '1',
+            'moderate_conservative': '2', 
+            'moderate': '3',
+            'moderate_aggressive': '4',
+            'aggressive': '5'
+        };
+        riskToleranceSelect.value = riskMapping[customer.risk_tolerance] || '';
         
-        // 投資経験の設定
+        // 投資経験のマッピング
         const investmentExperienceSelect = document.getElementById('editInvestmentExperience');
-        investmentExperienceSelect.value = customer.investment_experience || '';
+        const experienceMapping = {
+            'beginner': '初心者',
+            'experienced': '経験者',
+            'expert': '上級者'
+        };
+        investmentExperienceSelect.value = experienceMapping[customer.investment_experience] || '';
         
-        // 担当営業の設定
-        document.getElementById('editSalesRep').value = customer.sales_rep || '';
+        // 担当営業の設定（sales_rep_idから取得）
+        document.getElementById('editSalesRep').value = customer.sales_rep_id || '';
         
         // モーダル表示
         new bootstrap.Modal(document.getElementById('editCustomerModal')).show();
