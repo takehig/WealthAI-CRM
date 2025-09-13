@@ -76,7 +76,25 @@
                                 -
                             {% endif %}
                         </td>
-                        <td>{{ customer.investment_experience or "-" }}</td>
+                        <td>
+                            {% if customer.investment_experience %}
+                                {% set experience_display = {
+                                    'beginner': '初心者',
+                                    'intermediate': '経験者',
+                                    'experienced': '経験者',
+                                    'expert': '上級者',
+                                    '初級': '初心者',
+                                    '中級': '経験者',
+                                    '上級': '上級者',
+                                    '初心者': '初心者',
+                                    '経験者': '経験者',
+                                    '上級者': '上級者'
+                                } %}
+                                {{ experience_display.get(customer.investment_experience, customer.investment_experience) }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
                         <td>
                             <div class="btn-group" role="group">
                                 <button type="button" class="btn btn-sm btn-outline-primary" onclick="editCustomer({{ customer.customer_id }})">
