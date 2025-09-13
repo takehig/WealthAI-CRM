@@ -20,8 +20,8 @@
                         <th>商品名</th>
                         <th>種類</th>
                         <th class="text-end">数量</th>
-                        <th class="text-end">取得価格</th>
-                        <th class="text-end">現在価格</th>
+                        <th class="text-end">取得単価</th>
+                        <th class="text-end">現在単価</th>
                         <th class="text-end">評価額</th>
                         <th class="text-end">損益</th>
                         <th>満期日</th>
@@ -67,8 +67,8 @@
                             {% endif %}
                         </td>
                         <td class="text-end">
-                            {% if holding.purchase_price %}
-                                ¥{{ "{:,.2f}".format(holding.purchase_price) }}
+                            {% if holding.unit_price %}
+                                ¥{{ "{:,.2f}".format(holding.unit_price) }}
                             {% else %}
                                 -
                             {% endif %}
@@ -81,17 +81,27 @@
                             {% endif %}
                         </td>
                         <td class="text-end">
-                            {% if holding.current_price and holding.quantity %}
+                            {% if holding.current_value %}
+                                ¥{{ "{:,.0f}".format(holding.current_value) }}
+                            {% elif holding.current_price and holding.quantity %}
                                 ¥{{ "{:,.0f}".format(holding.quantity * holding.current_price) }}
-                            {% elif holding.purchase_price and holding.quantity %}
-                                ¥{{ "{:,.0f}".format(holding.quantity * holding.purchase_price) }}
+                            {% elif holding.unit_price and holding.quantity %}
+                                ¥{{ "{:,.0f}".format(holding.quantity * holding.unit_price) }}
                             {% else %}
                                 -
                             {% endif %}
                         </td>
                         <td class="text-end">
-                            {% if holding.current_price and holding.purchase_price and holding.quantity %}
-                                {% set pnl = (holding.current_price - holding.purchase_price) * holding.quantity %}
+                            {% if holding.unrealized_gain_loss %}
+                                {% if holding.unrealized_gain_loss > 0 %}
+                                    <span class="text-success">+¥{{ "{:,.0f}".format(holding.unrealized_gain_loss) }}</span>
+                                {% elif holding.unrealized_gain_loss < 0 %}
+                                    <span class="text-danger">¥{{ "{:,.0f}".format(holding.unrealized_gain_loss) }}</span>
+                                {% else %}
+                                    <span class="text-muted">¥0</span>
+                                {% endif %}
+                            {% elif holding.current_price and holding.unit_price and holding.quantity %}
+                                {% set pnl = (holding.current_price - holding.unit_price) * holding.quantity %}
                                 {% if pnl > 0 %}
                                     <span class="text-success">+¥{{ "{:,.0f}".format(pnl) }}</span>
                                 {% elif pnl < 0 %}
