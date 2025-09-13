@@ -202,6 +202,34 @@
                         <input type="number" class="form-control" id="editQuantity" name="quantity" step="0.01" required>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">取得単価 *</label>
+                        <input type="number" class="form-control" id="editUnitPrice" name="unit_price" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">現在単価</label>
+                        <input type="number" class="form-control" id="editCurrentPrice" name="current_price" step="0.01">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">購入日 *</label>
+                        <input type="date" class="form-control" id="editPurchaseDate" name="purchase_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">満期日</label>
+                        <input type="date" class="form-control" id="editMaturityDate" name="maturity_date">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <button type="submit" class="btn btn-primary">更新</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+                        <label class="form-label">数量 *</label>
+                        <input type="number" class="form-control" id="editQuantity" name="quantity" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">取得価格 *</label>
                         <input type="number" class="form-control" id="editPurchasePrice" name="purchase_price" step="0.01" required>
                     </div>
@@ -281,3 +309,50 @@ document.getElementById('editHoldingForm').addEventListener('submit', async func
 });
 </script>
 {% endblock %}
+<script>
+// 保有商品編集
+async function editHolding(holdingId) {
+    try {
+        const response = await fetch(`/api/holdings/${holdingId}`);
+        const holding = await response.json();
+        
+        document.getElementById('editHoldingId').value = holding.holding_id || '';
+        document.getElementById('editQuantity').value = holding.quantity || '';
+        document.getElementById('editUnitPrice').value = holding.unit_price || '';
+        document.getElementById('editCurrentPrice').value = holding.current_price || '';
+        document.getElementById('editPurchaseDate').value = holding.purchase_date || '';
+        document.getElementById('editMaturityDate').value = holding.maturity_date || '';
+        
+        new bootstrap.Modal(document.getElementById('editHoldingModal')).show();
+    } catch (error) {
+        alert('編集に失敗しました: ' + error.message);
+    }
+}
+
+// 保有商品更新
+document.getElementById('editHoldingForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const holdingData = Object.fromEntries(formData.entries());
+    const holdingId = holdingData.holding_id;
+    delete holdingData.holding_id;
+    
+    try {
+        const response = await fetch(`/api/holdings/${holdingId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(holdingData)
+        });
+        
+        if (response.ok) {
+            alert('更新しました');
+            location.reload();
+        } else {
+            alert('更新に失敗しました');
+        }
+    } catch (error) {
+        alert('更新に失敗しました: ' + error.message);
+    }
+});
+</script>

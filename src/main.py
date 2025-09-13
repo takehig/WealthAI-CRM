@@ -360,3 +360,32 @@ async def economic_events_list(request: Request, db: Session = Depends(get_db)):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+@app.get("/api/holdings/{holding_id}")
+async def get_holding_api(holding_id: int, db: Session = Depends(get_db)):
+    """保有商品取得API"""
+    holding = db.query(Holding).filter(Holding.holding_id == holding_id).first()
+    if not holding:
+        raise HTTPException(status_code=404, detail="Holding not found")
+    return holding
+
+@app.put("/api/holdings/{holding_id}")
+async def update_holding_api(holding_id: int, holding_data: dict, db: Session = Depends(get_db)):
+    """保有商品更新API"""
+    try:
+        holding = db.query(Holding).filter(Holding.holding_id == holding_id).first()
+        if not holding:
+            raise HTTPException(status_code=404, detail="Holding not found")
+        
+        # 更新可能フィールドのみ更新
+        updatable_fields = ['quantity', 'unit_price', 'current_price', 'purchase_date', 'maturity_date']
+        for field, value in holding_data.items():
+            if field in updatable_fields and hasattr(holding, field) and value is not None:
+                if value != '':
+                    setattr(holding, field, value)
+        
+        db.commit()
+        db.refresh(holding)
+        return holding
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Update failed: {str(e)}")
