@@ -4,151 +4,124 @@
 {% block header %}保有商品一覧{% endblock %}
 
 {% block content %}
-<style>
-    .main-content {
-        height: calc(100vh - 120px);
-        overflow-y: auto;
-    }
-    .table-container {
-        max-height: calc(100vh - 200px);
-        overflow-y: auto;
-    }
-</style>
-
-<div class="main-content">
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">保有商品管理</h5>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addHoldingModal">
-                <i class="fas fa-plus"></i> 新規保有商品追加
-            </button>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-container">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light sticky-top">
-                        <tr>
-                            <th>顧客</th>
-                            <th>商品名</th>
-                            <th>種類</th>
-                            <th>数量</th>
-                            <th>取得価格</th>
-                            <th>現在価格</th>
-                            <th>評価額</th>
-                            <th>損益</th>
-                            <th>満期日</th>
-                            <th>購入日</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for holding in holdings %}
-                        <tr>
-                            <td>
-                                <a href="/customers/{{ holding.customer.customer_id }}" class="text-decoration-none">
-                                    <strong>{{ holding.customer.name }}</strong>
-                                    <br><small class="text-muted">{{ holding.customer.customer_code }}</small>
-                                </a>
-                            </td>
-                            <td>
-                                <strong>{{ holding.product.product_name }}</strong>
-                                <br><small class="text-muted">{{ holding.product.product_code }}</small>
-                            </td>
-                            <td>
-                                {% if holding.product.product_type == 'bond' %}
-                                    <span class="badge bg-primary">債券</span>
-                                {% elif holding.product.product_type == 'stock' %}
-                                    <span class="badge bg-danger">株式</span>
-                                {% elif holding.product.product_type == 'fund' %}
-                                    <span class="badge bg-success">投信</span>
-                                {% elif holding.product.product_type == 'etf' %}
-                                    <span class="badge bg-info">上場投信</span>
-                                {% elif holding.product.product_type == 'structured_product' %}
-                                    <span class="badge bg-warning text-dark">仕組み債</span>
-                                {% else %}
-                                    <span class="badge bg-secondary">{{ holding.product.product_type }}</span>
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>顧客</th>
+                        <th>商品名</th>
+                        <th>種類</th>
+                        <th>数量</th>
+                        <th>取得価格</th>
+                        <th>現在価格</th>
+                        <th>評価額</th>
+                        <th>損益</th>
+                        <th>満期日</th>
+                        <th>購入日</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for holding in holdings %}
+                    <tr>
+                        <td>
+                            <a href="/customers/{{ holding.customer.customer_id }}" class="text-decoration-none">
+                                <strong>{{ holding.customer.name or "-" }}</strong>
+                                {% if holding.customer.customer_code %}
+                                <br><small class="text-muted">{{ holding.customer.customer_code }}</small>
                                 {% endif %}
-                            </td>
-                            <td class="text-end">{{ "{:,.0f}".format(holding.quantity) }}</td>
-                            <td class="text-end">¥{{ "{:,.2f}".format(holding.purchase_price) }}</td>
-                            <td class="text-end">
-                                {% if holding.current_price %}
-                                    ¥{{ "{:,.2f}".format(holding.current_price) }}
+                            </a>
+                        </td>
+                        <td>
+                            <strong>{{ holding.product.product_name or "-" }}</strong>
+                            {% if holding.product.product_code %}
+                            <br><small class="text-muted">{{ holding.product.product_code }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if holding.product.product_type == "bond" %}
+                                <span class="badge bg-primary">債券</span>
+                            {% elif holding.product.product_type == "stock" %}
+                                <span class="badge bg-danger">株式</span>
+                            {% elif holding.product.product_type == "fund" %}
+                                <span class="badge bg-success">投信</span>
+                            {% elif holding.product.product_type == "structured_product" %}
+                                <span class="badge bg-warning text-dark">仕組み債</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ holding.product.product_type or "unknown" }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if holding.quantity %}
+                                {{ "{:,.0f}".format(holding.quantity) }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if holding.purchase_price %}
+                                ¥{{ "{:,.2f}".format(holding.purchase_price) }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if holding.current_price %}
+                                ¥{{ "{:,.2f}".format(holding.current_price) }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if holding.current_price and holding.quantity %}
+                                ¥{{ "{:,.0f}".format(holding.quantity * holding.current_price) }}
+                            {% elif holding.purchase_price and holding.quantity %}
+                                ¥{{ "{:,.0f}".format(holding.quantity * holding.purchase_price) }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if holding.current_price and holding.purchase_price and holding.quantity %}
+                                {% set pnl = (holding.current_price - holding.purchase_price) * holding.quantity %}
+                                {% if pnl > 0 %}
+                                    <span class="text-success">+¥{{ "{:,.0f}".format(pnl) }}</span>
+                                {% elif pnl < 0 %}
+                                    <span class="text-danger">¥{{ "{:,.0f}".format(pnl) }}</span>
                                 {% else %}
-                                    -
+                                    <span class="text-muted">¥0</span>
                                 {% endif %}
-                            </td>
-                            <td class="text-end">
-                                {% if holding.current_price %}
-                                    ¥{{ "{:,.0f}".format(holding.quantity * holding.current_price) }}
-                                {% else %}
-                                    ¥{{ "{:,.0f}".format(holding.quantity * holding.purchase_price) }}
-                                {% endif %}
-                            </td>
-                            <td class="text-end">
-                                {% if holding.current_price %}
-                                    {% set pnl = (holding.current_price - holding.purchase_price) * holding.quantity %}
-                                    {% if pnl > 0 %}
-                                        <span class="text-success">+¥{{ "{:,.0f}".format(pnl) }}</span>
-                                    {% elif pnl < 0 %}
-                                        <span class="text-danger">¥{{ "{:,.0f}".format(pnl) }}</span>
-                                    {% else %}
-                                        <span class="text-muted">¥0</span>
-                                    {% endif %}
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if holding.maturity_date %}
-                                    {{ holding.maturity_date.strftime('%Y-%m-%d') }}
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-                            <td>{{ holding.purchase_date.strftime('%Y-%m-%d') }}</td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="editHolding({{ holding.holding_id }})">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if holding.maturity_date %}
+                                {{ holding.maturity_date.strftime("%Y-%m-%d") }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if holding.purchase_date %}
+                                {{ holding.purchase_date.strftime("%Y-%m-%d") }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
-<script>
-// 保有商品編集
-async function editHolding(holdingId) {
-    try {
-        const response = await fetch(`/api/holdings/${holdingId}`);
-        if (!response.ok) {
-            throw new Error('保有商品情報の取得に失敗しました');
-        }
-        
-        const holding = await response.json();
-        
-        // フォームに既存データを設定
-        document.getElementById('editHoldingId').value = holding.holding_id;
-        document.getElementById('editCustomerId').value = holding.customer_id;
-        document.getElementById('editProductId').value = holding.product_id;
-        document.getElementById('editQuantity').value = holding.quantity;
-        document.getElementById('editPurchasePrice').value = holding.purchase_price;
-        document.getElementById('editCurrentPrice').value = holding.current_price || '';
-        document.getElementById('editPurchaseDate').value = holding.purchase_date;
-        document.getElementById('editMaturityDate').value = holding.maturity_date || '';
-        
-        // モーダル表示
-        new bootstrap.Modal(document.getElementById('editHoldingModal')).show();
-    } catch (error) {
-        alert('保有商品情報の取得に失敗しました: ' + error.message);
-    }
-}
-</script>
+<div class="mt-3">
+    <p class="text-muted">
+        <i class="fas fa-info-circle"></i> 
+        総保有商品数: {{ holdings|length }}件
+    </p>
+</div>
 {% endblock %}
