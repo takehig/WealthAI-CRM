@@ -266,10 +266,12 @@ async function editHolding(holdingId) {
         const holding = await response.json();
         
         // フォームに既存データを設定
-        document.getElementById('editHoldingId').value = holding.holding_id;
-        document.getElementById('editQuantity').value = holding.quantity;
-        document.getElementById('editPurchasePrice').value = holding.purchase_price;
+        document.getElementById('editHoldingId').value = holding.holding_id || '';
+        document.getElementById('editQuantity').value = holding.quantity || '';
+        document.getElementById('editUnitPrice').value = holding.unit_price || '';
         document.getElementById('editCurrentPrice').value = holding.current_price || '';
+        document.getElementById('editPurchaseDate').value = holding.purchase_date || '';
+        document.getElementById('editMaturityDate').value = holding.maturity_date || '';
         
         // モーダル表示
         new bootstrap.Modal(document.getElementById('editHoldingModal')).show();
@@ -309,50 +311,3 @@ document.getElementById('editHoldingForm').addEventListener('submit', async func
 });
 </script>
 {% endblock %}
-<script>
-// 保有商品編集
-async function editHolding(holdingId) {
-    try {
-        const response = await fetch(`/api/holdings/${holdingId}`);
-        const holding = await response.json();
-        
-        document.getElementById('editHoldingId').value = holding.holding_id || '';
-        document.getElementById('editQuantity').value = holding.quantity || '';
-        document.getElementById('editUnitPrice').value = holding.unit_price || '';
-        document.getElementById('editCurrentPrice').value = holding.current_price || '';
-        document.getElementById('editPurchaseDate').value = holding.purchase_date || '';
-        document.getElementById('editMaturityDate').value = holding.maturity_date || '';
-        
-        new bootstrap.Modal(document.getElementById('editHoldingModal')).show();
-    } catch (error) {
-        alert('編集に失敗しました: ' + error.message);
-    }
-}
-
-// 保有商品更新
-document.getElementById('editHoldingForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    const holdingData = Object.fromEntries(formData.entries());
-    const holdingId = holdingData.holding_id;
-    delete holdingData.holding_id;
-    
-    try {
-        const response = await fetch(`/api/holdings/${holdingId}`, {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(holdingData)
-        });
-        
-        if (response.ok) {
-            alert('更新しました');
-            location.reload();
-        } else {
-            alert('更新に失敗しました');
-        }
-    } catch (error) {
-        alert('更新に失敗しました: ' + error.message);
-    }
-});
-</script>
