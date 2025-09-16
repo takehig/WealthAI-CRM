@@ -128,8 +128,11 @@
                             {% endif %}
                         </td>
                         <td>
-                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="editHolding({{ holding.holding_id }})">
+                            <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="editHolding({{ holding.holding_id }})">
                                 <i class="fas fa-edit"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteHolding({{ holding.holding_id }})">
+                                <i class="fas fa-trash"></i>
                             </button>
                         </td>
                     </tr>
@@ -240,6 +243,28 @@
 </div>
 
 <script>
+// 保有商品削除
+async function deleteHolding(holdingId) {
+    if (!confirm('この保有商品を削除しますか？\n削除すると元に戻せません。')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/holdings/${holdingId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            alert('削除しました');
+            location.reload();
+        } else {
+            alert('削除に失敗しました');
+        }
+    } catch (error) {
+        alert('削除に失敗しました: ' + error.message);
+    }
+}
+
 // 保有商品編集
 async function editHolding(holdingId) {
     try {
