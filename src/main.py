@@ -92,20 +92,25 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
         "total_products": db.query(Product).count(),
         "total_holdings": db.query(Holding).count(),
         "total_sales_notes": db.query(SalesNote.note_id).count(),  # シンプル化後のフィールドのみ
-        "total_cash_inflows": db.query(CashInflow).count(),
         "total_economic_events": db.query(EconomicEvent).count(),
     }
     
     # 保有資産総額を計算
     total_assets = db.query(func.sum(Holding.current_value)).scalar() or 0
     
-    # 入金予測総額を計算
-    total_predicted_inflows = db.query(func.sum(CashInflow.predicted_amount)).filter(
-        CashInflow.status == 'predicted'
-    ).scalar() or 0
+    # 簿価総額を計算
+    total_book_value = db.query(func.sum(Holding.quantity * Holding.unit_price)).scalar() or 0
+    
+    # 評価額総額を計算
+    total_market_value = db.query(func.sum(Holding.current_value)).scalar() or 0
+    
+    # 含み損益を計算
+    unrealized_gain_loss = total_market_value - total_book_value
     
     stats["total_assets"] = total_assets
-    stats["total_predicted_inflows"] = total_predicted_inflows
+    stats["total_book_value"] = total_book_value
+    stats["total_market_value"] = total_market_value
+    stats["unrealized_gain_loss"] = unrealized_gain_loss
     
     return templates.TemplateResponse("dashboard.html", {
         "request": request,

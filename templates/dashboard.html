@@ -86,15 +86,22 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-6">
-                        <p class="text-muted mb-1">顧客資産総額</p>
-                        <h4 class="text-primary">¥{{ "{:,.0f}".format(stats.total_assets) }}</h4>
-                        <small class="text-muted">全担当顧客の合計</small>
+                    <div class="col-4">
+                        <p class="text-muted mb-1">簿価総額</p>
+                        <h4 class="text-info">¥{{ "{:,.0f}".format(stats.total_book_value) }}</h4>
+                        <small class="text-muted">取得価格ベース</small>
                     </div>
-                    <div class="col-6">
-                        <p class="text-muted mb-1">入金予測総額</p>
-                        <h4 class="text-success">¥{{ "{:,.0f}".format(stats.total_predicted_inflows) }}</h4>
-                        <small class="text-muted">今後の見込み</small>
+                    <div class="col-4">
+                        <p class="text-muted mb-1">評価額総額</p>
+                        <h4 class="text-primary">¥{{ "{:,.0f}".format(stats.total_market_value) }}</h4>
+                        <small class="text-muted">時価ベース</small>
+                    </div>
+                    <div class="col-4">
+                        <p class="text-muted mb-1">含み損益</p>
+                        <h4 class="{% if stats.unrealized_gain_loss >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {% if stats.unrealized_gain_loss >= 0 %}+{% endif %}¥{{ "{:,.0f}".format(stats.unrealized_gain_loss) }}
+                        </h4>
+                        <small class="text-muted">評価額 - 簿価</small>
                     </div>
                 </div>
             </div>
