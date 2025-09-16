@@ -7,6 +7,7 @@ from sqlalchemy import create_engine, Column, Integer, String, Date, DateTime, B
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.sql import func
+from sqlalchemy.dialects.postgresql import TSVECTOR
 import os
 from dotenv import load_dotenv
 
@@ -108,23 +109,18 @@ class Holding(Base):
     customer = relationship("Customer", back_populates="holdings")
     product = relationship("Product", back_populates="holdings")
 
-# 営業メモモデル
+# 営業メモモデル（シンプル化・雑メモ構造）
 class SalesNote(Base):
     __tablename__ = "sales_notes"
     
     note_id = Column(Integer, primary_key=True, index=True)
     customer_id = Column(Integer, ForeignKey("customers.customer_id"))
     sales_rep_id = Column(Integer, ForeignKey("sales_representatives.rep_id"))
-    note_type = Column(String(30))
     subject = Column(String(200))
     content = Column(Text, nullable=False)
-    priority = Column(String(20), default="normal")
-    follow_up_date = Column(Date)
-    is_cash_related = Column(Boolean, default=False)
-    predicted_amount = Column(Integer)
-    predicted_date = Column(Date)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    search_vector = Column(TSVECTOR)
     
     # リレーション
     customer = relationship("Customer", back_populates="sales_notes")
