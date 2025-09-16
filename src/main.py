@@ -133,8 +133,16 @@ async def customer_detail(request: Request, customer_id: int, db: Session = Depe
     # 保有商品を取得
     holdings = db.query(Holding).join(Product).filter(Holding.customer_id == customer_id).all()
     
-    # 営業メモを取得
-    sales_notes = db.query(SalesNote).filter(SalesNote.customer_id == customer_id).all()
+    # 営業メモを取得（シンプル化後のフィールドのみ）
+    sales_notes = db.query(
+        SalesNote.note_id,
+        SalesNote.customer_id,
+        SalesNote.sales_rep_id,
+        SalesNote.subject,
+        SalesNote.content,
+        SalesNote.created_at,
+        SalesNote.updated_at
+    ).filter(SalesNote.customer_id == customer_id).all()
     
     # 入金予測を取得
     cash_inflows = db.query(CashInflow).filter(CashInflow.customer_id == customer_id).all()
@@ -333,7 +341,18 @@ async def sync_products_from_master(db: Session = Depends(get_db)):
 @app.get("/sales-notes", response_class=HTMLResponse)
 async def sales_notes_list(request: Request, db: Session = Depends(get_db)):
     """営業メモ一覧"""
-    sales_notes = db.query(SalesNote).join(Customer).all()
+    # シンプル化後のフィールドのみ取得
+    sales_notes = db.query(
+        SalesNote.note_id,
+        SalesNote.customer_id,
+        SalesNote.sales_rep_id,
+        SalesNote.subject,
+        SalesNote.content,
+        SalesNote.created_at,
+        SalesNote.updated_at,
+        Customer.name.label('customer_name')
+    ).join(Customer).all()
+    
     return templates.TemplateResponse("sales_notes.html", {
         "request": request,
         "sales_notes": sales_notes
