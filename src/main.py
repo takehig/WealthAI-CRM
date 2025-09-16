@@ -91,7 +91,7 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
         "total_customers": db.query(Customer).count(),
         "total_products": db.query(Product).count(),
         "total_holdings": db.query(Holding).count(),
-        "total_sales_notes": db.query(SalesNote).count(),
+        "total_sales_notes": db.query(SalesNote.note_id).count(),  # シンプル化後のフィールドのみ
         "total_cash_inflows": db.query(CashInflow).count(),
         "total_economic_events": db.query(EconomicEvent).count(),
     }
