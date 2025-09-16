@@ -337,6 +337,40 @@ async def sync_products_from_master(db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Sync error: {str(e)}")
 
+@app.get("/api/assets/book-value")
+async def get_total_book_value(db: Session = Depends(get_db)):
+    """顧客資産簿価総額取得API"""
+    try:
+        # 簿価総額 = quantity × unit_price の合計
+        total_book_value = db.query(
+            func.sum(Holding.quantity * Holding.unit_price)
+        ).scalar() or 0
+        
+        return {
+            "status": "success",
+            "total_book_value": float(total_book_value),
+            "message": "簿価総額取得成功"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"簿価総額取得エラー: {str(e)}")
+
+@app.get("/api/assets/market-value")
+async def get_total_market_value(db: Session = Depends(get_db)):
+    """顧客資産評価額総額取得API"""
+    try:
+        # 評価額総額 = current_value の合計
+        total_market_value = db.query(
+            func.sum(Holding.current_value)
+        ).scalar() or 0
+        
+        return {
+            "status": "success",
+            "total_market_value": float(total_market_value),
+            "message": "評価額総額取得成功"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"評価額総額取得エラー: {str(e)}")
+
 # 他のエンドポイント（省略）
 @app.get("/sales-notes", response_class=HTMLResponse)
 async def sales_notes_list(request: Request, db: Session = Depends(get_db)):
