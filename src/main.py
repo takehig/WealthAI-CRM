@@ -357,6 +357,21 @@ async def economic_events_list(request: Request, db: Session = Depends(get_db)):
         "economic_events": economic_events
     })
 
+@app.delete("/api/holdings/{holding_id}")
+async def delete_holding_api(holding_id: int, db: Session = Depends(get_db)):
+    """保有商品削除API"""
+    try:
+        holding = db.query(Holding).filter(Holding.holding_id == holding_id).first()
+        if not holding:
+            raise HTTPException(status_code=404, detail="Holding not found")
+        
+        db.delete(holding)
+        db.commit()
+        return {"message": "Holding deleted successfully"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Delete failed: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
