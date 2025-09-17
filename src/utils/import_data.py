@@ -17,9 +17,9 @@ load_dotenv()
 # データベース接続設定
 DB_CONFIG = {
     'host': os.getenv('DB_HOST', 'localhost'),
-    'database': os.getenv('DB_NAME', 'wealthai'),
-    'user': os.getenv('DB_USER', 'wealthai_user'),
-    'password': os.getenv('DB_PASSWORD', 'wealthai123'),
+    'database': os.getenv('DB_NAME', 'crm'),
+    'user': os.getenv('DB_USER', 'crm_user'),
+    'password': os.getenv('DB_PASSWORD', 'crm123'),
     'port': int(os.getenv('DB_PORT', 5432))
 }
 

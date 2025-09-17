@@ -2,14 +2,14 @@
 
 # 複数データベース設定
 DATABASES = {
-    'wealthai': {
-        'name': 'WealthAI Database',
+    'crm': {
+        'name': 'CRM Database',
         'description': '顧客管理・保有商品データ',
         'host': 'localhost',
         'port': 5432,
-        'database': 'wealthai',
-        'user': 'wealthai_user',
-        'password': 'wealthai123'
+        'database': 'crm',
+        'user': 'crm_user',
+        'password': 'crm123'
     },
     'productmaster': {
         'name': 'ProductMaster Database', 
