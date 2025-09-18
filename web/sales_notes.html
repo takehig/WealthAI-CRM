@@ -5,6 +5,12 @@
 
 {% block content %}
 <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">営業メモ一覧</h5>
+        <button type="button" class="btn btn-primary" onclick="showAddModal()">
+            <i class="fas fa-plus"></i> 新規追加
+        </button>
+    </div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-hover" id="salesNotesTable">
@@ -15,6 +21,7 @@
                         <th onclick="sortTable(2)">件名 <i class="fas fa-sort"></i></th>
                         <th onclick="sortTable(3)">内容 <i class="fas fa-sort"></i></th>
                         <th onclick="sortTable(4)">作成日 <i class="fas fa-sort"></i></th>
+                        <th>操作</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -24,15 +31,66 @@
                         <td>{{ note.customer_name }}</td>
                         <td>{{ note.subject or '-' }}</td>
                         <td>
-                            <div style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            <div id="content-preview-{{ note.note_id }}" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                 {{ note.content[:100] }}{% if note.content|length > 100 %}...{% endif %}
                             </div>
+                            {% if note.content|length > 100 %}
+                            <div id="content-full-{{ note.note_id }}" style="display: none; max-width: 300px; word-wrap: break-word;">
+                                {{ note.content }}
+                            </div>
+                            <button class="btn btn-sm btn-link p-0" onclick="toggleContent({{ note.note_id }})">
+                                <span id="toggle-text-{{ note.note_id }}">全文表示</span>
+                            </button>
+                            {% endif %}
                         </td>
                         <td>{{ note.created_at.strftime('%Y-%m-%d') if note.created_at else '-' }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="editNote({{ note.note_id }}, '{{ note.subject or '' }}', '{{ note.content|replace("'", "\\'") }}', {{ note.customer_id }})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteNote({{ note.note_id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- 追加・編集モーダル -->
+<div class="modal fade" id="noteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="noteModalTitle">営業メモ追加</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="noteForm">
+                    <input type="hidden" id="noteId" value="">
+                    <div class="mb-3">
+                        <label for="customerId" class="form-label">顧客ID</label>
+                        <input type="number" class="form-control" id="customerId" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">件名</label>
+                        <input type="text" class="form-control" id="subject">
+                    </div>
+                    <div class="mb-3">
+                        <label for="content" class="form-label">内容</label>
+                        <textarea class="form-control" id="content" rows="5" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-primary" onclick="saveNote()">保存</button>
+            </div>
         </div>
     </div>
 </div>
@@ -74,6 +132,95 @@ function sortTable(n) {
                 switching = true;
             }
         }
+    }
+}
+
+function toggleContent(noteId) {
+    const preview = document.getElementById(`content-preview-${noteId}`);
+    const full = document.getElementById(`content-full-${noteId}`);
+    const toggleText = document.getElementById(`toggle-text-${noteId}`);
+    
+    if (full.style.display === 'none') {
+        preview.style.display = 'none';
+        full.style.display = 'block';
+        toggleText.textContent = '省略表示';
+    } else {
+        preview.style.display = 'block';
+        full.style.display = 'none';
+        toggleText.textContent = '全文表示';
+    }
+}
+
+function showAddModal() {
+    document.getElementById('noteModalTitle').textContent = '営業メモ追加';
+    document.getElementById('noteId').value = '';
+    document.getElementById('customerId').value = '';
+    document.getElementById('subject').value = '';
+    document.getElementById('content').value = '';
+    new bootstrap.Modal(document.getElementById('noteModal')).show();
+}
+
+function editNote(noteId, subject, content, customerId) {
+    document.getElementById('noteModalTitle').textContent = '営業メモ編集';
+    document.getElementById('noteId').value = noteId;
+    document.getElementById('customerId').value = customerId;
+    document.getElementById('subject').value = subject;
+    document.getElementById('content').value = content;
+    new bootstrap.Modal(document.getElementById('noteModal')).show();
+}
+
+async function saveNote() {
+    const noteId = document.getElementById('noteId').value;
+    const customerId = document.getElementById('customerId').value;
+    const subject = document.getElementById('subject').value;
+    const content = document.getElementById('content').value;
+    
+    try {
+        let response;
+        if (noteId) {
+            // 編集
+            response = await fetch(`/api/sales-notes/${noteId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `subject=${encodeURIComponent(subject)}&content=${encodeURIComponent(content)}`
+            });
+        } else {
+            // 新規追加
+            response = await fetch('/api/sales-notes', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `customer_id=${customerId}&subject=${encodeURIComponent(subject)}&content=${encodeURIComponent(content)}`
+            });
+        }
+        
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('noteModal')).hide();
+            location.reload();
+        } else {
+            const error = await response.json();
+            alert('保存に失敗しました: ' + (error.detail || '不明なエラー'));
+        }
+    } catch (error) {
+        alert('保存に失敗しました: ' + error.message);
+    }
+}
+
+async function deleteNote(noteId) {
+    if (!confirm('このメモを削除しますか？')) return;
+    
+    try {
+        const response = await fetch(`/api/sales-notes/${noteId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            const error = await response.json();
+            alert('削除に失敗しました: ' + (error.detail || '不明なエラー'));
+        }
+    } catch (error) {
+        alert('削除に失敗しました: ' + error.message);
     }
 }
 </script>

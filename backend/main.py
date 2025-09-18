@@ -397,6 +397,66 @@ async def sales_notes_list(request: Request, db: Session = Depends(get_db)):
         "sales_notes": sales_notes
     })
 
+# 営業メモ CRUD API
+@app.post("/api/sales-notes")
+async def create_sales_note(
+    customer_id: int,
+    subject: str = "",
+    content: str = "",
+    db: Session = Depends(get_db)
+):
+    """営業メモ作成"""
+    try:
+        new_note = SalesNote(
+            customer_id=customer_id,
+            sales_rep_id=1,  # デフォルト担当者
+            subject=subject,
+            content=content
+        )
+        db.add(new_note)
+        db.commit()
+        db.refresh(new_note)
+        return {"status": "success", "note_id": new_note.note_id}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/sales-notes/{note_id}")
+async def update_sales_note(
+    note_id: int,
+    subject: str = "",
+    content: str = "",
+    db: Session = Depends(get_db)
+):
+    """営業メモ更新"""
+    try:
+        note = db.query(SalesNote).filter(SalesNote.note_id == note_id).first()
+        if not note:
+            raise HTTPException(status_code=404, detail="メモが見つかりません")
+        
+        note.subject = subject
+        note.content = content
+        db.commit()
+        return {"status": "success"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/sales-notes/{note_id}")
+async def delete_sales_note(note_id: int, db: Session = Depends(get_db)):
+    """営業メモ削除"""
+    try:
+        note = db.query(SalesNote).filter(SalesNote.note_id == note_id).first()
+        if not note:
+            raise HTTPException(status_code=404, detail="メモが見つかりません")
+        
+        db.delete(note)
+        db.commit()
+        return {"status": "success"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/cash-inflows", response_class=HTMLResponse)
 async def cash_inflows_list(request: Request, db: Session = Depends(get_db)):
     """入金予測一覧"""
