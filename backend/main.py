@@ -390,13 +390,16 @@ async def sales_notes_list(request: Request, db: Session = Depends(get_db)):
         Customer.name.label('customer_name')
     ).join(Customer).order_by(SalesNote.customer_id, SalesNote.note_id).all()
     
-    # 顧客一覧も取得
-    customers = db.query(Customer).order_by(Customer.customer_id).all()
+    # メモが未作成の顧客のみ取得
+    customers_with_notes = db.query(SalesNote.customer_id).distinct().subquery()
+    customers_without_notes = db.query(Customer).filter(
+        ~Customer.customer_id.in_(db.query(customers_with_notes.c.customer_id))
+    ).order_by(Customer.customer_id).all()
     
     return templates.TemplateResponse("sales_notes.html", {
         "request": request,
         "sales_notes": sales_notes,
-        "customers": customers
+        "customers": customers_without_notes
     })
 
 # 営業メモ CRUD API
