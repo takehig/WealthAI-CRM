@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func, Column, Integer, String, Date
-from models.database import get_db, Customer, SalesRepresentative, Product, Holding, SalesNote, CashInflow, EconomicEvent, Base
+from .models.database import get_db, Customer, SalesRepresentative, Product, Holding, SalesNote, CashInflow, EconomicEvent, Base
 from typing import List
 import os
 from pathlib import Path

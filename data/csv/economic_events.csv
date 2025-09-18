@@ -1,6 +1,0 @@
-event_type,title,description,event_date,impact_level,affected_sectors,affected_currencies
-election,衆議院総選挙,衆議院解散により総選挙が実施される見込み,2025-10-15,high,"{""金融"",""建設"",""エネルギー""}","{""JPY"",""USD""}"
-policy_change,日銀金利政策変更,日本銀行が政策金利の引き上げを検討,2025-09-20,high,"{""銀行"",""保険"",""不動産""}","{""JPY""}"
-economic_indicator,GDP発表,第2四半期GDP速報値発表,2025-08-15,medium,"{""全セクター""}","{""JPY""}"
-political_event,内閣改造,新内閣発足による政策変更の可能性,2025-09-01,medium,"{""建設"",""医療"",""IT""}","{""JPY""}"
-policy_change,米FED利下げ,米連邦準備制度理事会が利下げを実施,2025-11-07,high,"{""金融"",""テクノロジー""}","{""USD"",""JPY""}"
