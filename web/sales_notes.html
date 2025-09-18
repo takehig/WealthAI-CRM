@@ -13,38 +13,38 @@
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-hover" id="salesNotesTable">
+            <table class="table table-hover" id="salesNotesTable" style="table-layout: fixed; width: 100%;">
                 <thead class="table-light">
                     <tr>
-                        <th onclick="sortTable(0)">メモID <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(1)">顧客名 <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(2)">件名 <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(3)">内容 <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(4)">作成日 <i class="fas fa-sort"></i></th>
-                        <th>操作</th>
+                        <th onclick="sortTable(0)" style="width: 80px;">メモID <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(1)" style="width: 120px;">顧客名 <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(2)" style="width: 150px;">件名 <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(3)" style="width: auto;">内容 <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(4)" style="width: 100px;">作成日 <i class="fas fa-sort"></i></th>
+                        <th style="width: 100px;">操作</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for note in sales_notes %}
                     <tr>
-                        <td>{{ note.note_id }}</td>
-                        <td>{{ note.customer_name }}</td>
-                        <td>{{ note.subject or '-' }}</td>
+                        <td style="width: 80px;">{{ note.note_id }}</td>
+                        <td style="width: 120px; word-wrap: break-word;">{{ note.customer_name }}</td>
+                        <td style="width: 150px; word-wrap: break-word;">{{ note.subject or '-' }}</td>
                         <td>
-                            <div id="content-preview-{{ note.note_id }}" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                {{ note.content[:100] }}{% if note.content|length > 100 %}...{% endif %}
+                            <div id="content-preview-{{ note.note_id }}" style="max-width: 500px; max-height: 120px; overflow-y: auto; word-wrap: break-word; white-space: pre-wrap; line-height: 1.4;">
+                                {{ note.content[:300] }}{% if note.content|length > 300 %}...{% endif %}
                             </div>
-                            {% if note.content|length > 100 %}
-                            <div id="content-full-{{ note.note_id }}" style="display: none; max-width: 300px; word-wrap: break-word;">
+                            {% if note.content|length > 300 %}
+                            <div id="content-full-{{ note.note_id }}" style="display: none; max-width: 500px; word-wrap: break-word; white-space: pre-wrap; line-height: 1.4;">
                                 {{ note.content }}
                             </div>
-                            <button class="btn btn-sm btn-link p-0" onclick="toggleContent({{ note.note_id }})">
+                            <button class="btn btn-sm btn-link p-0 mt-1" onclick="toggleContent({{ note.note_id }})">
                                 <span id="toggle-text-{{ note.note_id }}">全文表示</span>
                             </button>
                             {% endif %}
                         </td>
-                        <td>{{ note.created_at.strftime('%Y-%m-%d') if note.created_at else '-' }}</td>
-                        <td>
+                        <td style="width: 100px;">{{ note.created_at.strftime('%Y-%m-%d') if note.created_at else '-' }}</td>
+                        <td style="width: 100px;">
                             <div class="btn-group" role="group">
                                 <button type="button" class="btn btn-sm btn-outline-primary" onclick="editNote({{ note.note_id }}, '{{ note.subject or '' }}', '{{ note.content|replace("'", "\\'") }}', {{ note.customer_id }})">
                                     <i class="fas fa-edit"></i>
