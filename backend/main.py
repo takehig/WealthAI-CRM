@@ -400,13 +400,16 @@ async def sales_notes_list(request: Request, db: Session = Depends(get_db)):
 # 営業メモ CRUD API
 @app.post("/api/sales-notes")
 async def create_sales_note(
-    customer_id: int,
-    subject: str = "",
-    content: str = "",
+    request: Request,
     db: Session = Depends(get_db)
 ):
     """営業メモ作成"""
     try:
+        form = await request.form()
+        customer_id = int(form.get("customer_id"))
+        subject = form.get("subject", "")
+        content = form.get("content", "")
+        
         new_note = SalesNote(
             customer_id=customer_id,
             sales_rep_id=1,  # デフォルト担当者
@@ -424,12 +427,15 @@ async def create_sales_note(
 @app.put("/api/sales-notes/{note_id}")
 async def update_sales_note(
     note_id: int,
-    subject: str = "",
-    content: str = "",
+    request: Request,
     db: Session = Depends(get_db)
 ):
     """営業メモ更新"""
     try:
+        form = await request.form()
+        subject = form.get("subject", "")
+        content = form.get("content", "")
+        
         note = db.query(SalesNote).filter(SalesNote.note_id == note_id).first()
         if not note:
             raise HTTPException(status_code=404, detail="メモが見つかりません")
