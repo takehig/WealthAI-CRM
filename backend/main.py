@@ -75,7 +75,7 @@ app = FastAPI(title="WealthAI CRM", description="ウェルスマネジメント�
 
 # テンプレートとスタティックファイルの設定
 BASE_DIR = Path(__file__).parent.parent
-templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+templates = Jinja2Templates(directory=str(BASE_DIR / "web"))
 
 # スタティックファイルディレクトリを作成（存在しない場合）
 static_dir = BASE_DIR / "static"
