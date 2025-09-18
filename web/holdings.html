@@ -13,16 +13,16 @@
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-hover">
+            <table class="table table-hover" id="holdingsTable">
                 <thead class="table-light">
                     <tr>
-                        <th>顧客</th>
-                        <th>商品名</th>
-                        <th>種類</th>
-                        <th class="text-end">数量</th>
-                        <th class="text-end">取得単価</th>
-                        <th class="text-end">現在単価</th>
-                        <th class="text-end">評価額</th>
+                        <th onclick="sortTable(0)">顧客 <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(1)">商品名 <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(2)">種類 <i class="fas fa-sort"></i></th>
+                        <th class="text-end" onclick="sortTable(3)">数量 <i class="fas fa-sort"></i></th>
+                        <th class="text-end" onclick="sortTable(4)">取得単価 <i class="fas fa-sort"></i></th>
+                        <th class="text-end" onclick="sortTable(5)">現在単価 <i class="fas fa-sort"></i></th>
+                        <th class="text-end" onclick="sortTable(6)">評価額 <i class="fas fa-sort"></i></th>
                         <th class="text-end">損益</th>
                         <th>満期日</th>
                         <th>購入日</th>
@@ -319,5 +319,42 @@ document.getElementById('editHoldingForm').addEventListener('submit', async func
         alert('更新に失敗しました: ' + error.message);
     }
 });
+
+function sortTable(n) {
+    var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+    table = document.getElementById("holdingsTable");
+    switching = true;
+    dir = "asc";
+    while (switching) {
+        switching = false;
+        rows = table.rows;
+        for (i = 1; i < (rows.length - 1); i++) {
+            shouldSwitch = false;
+            x = rows[i].getElementsByTagName("TD")[n];
+            y = rows[i + 1].getElementsByTagName("TD")[n];
+            if (dir == "asc") {
+                if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                    shouldSwitch = true;
+                    break;
+                }
+            } else if (dir == "desc") {
+                if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                    shouldSwitch = true;
+                    break;
+                }
+            }
+        }
+        if (shouldSwitch) {
+            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+            switching = true;
+            switchcount++;
+        } else {
+            if (switchcount == 0 && dir == "asc") {
+                dir = "desc";
+                switching = true;
+            }
+        }
+    }
+}
 </script>
 {% endblock %}

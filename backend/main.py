@@ -120,7 +120,7 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
 @app.get("/customers", response_class=HTMLResponse)
 async def customers_list(request: Request, db: Session = Depends(get_db)):
     """顧客一覧"""
-    customers = db.query(Customer).all()
+    customers = db.query(Customer).order_by(Customer.customer_id).all()
     sales_reps = db.query(SalesRepresentative).all()
     return templates.TemplateResponse("customers.html", {
         "request": request,
@@ -163,7 +163,7 @@ async def customer_detail(request: Request, customer_id: int, db: Session = Depe
 @app.get("/holdings", response_class=HTMLResponse)
 async def holdings_list(request: Request, db: Session = Depends(get_db)):
     """保有商品一覧"""
-    holdings = db.query(Holding).join(Customer).join(Product).filter(Holding.status == 'active').all()
+    holdings = db.query(Holding).join(Customer).join(Product).filter(Holding.status == 'active').order_by(Holding.holding_id).all()
     customers = db.query(Customer).all()
     crm_products = db.query(CRMProduct).all()
     return templates.TemplateResponse("holdings.html", {
@@ -176,7 +176,7 @@ async def holdings_list(request: Request, db: Session = Depends(get_db)):
 @app.get("/products", response_class=HTMLResponse)
 async def crm_products_list(request: Request, db: Session = Depends(get_db)):
     """CRM商品一覧"""
-    crm_products = db.query(CRMProduct).all()
+    crm_products = db.query(CRMProduct).order_by(CRMProduct.product_code).all()
     return templates.TemplateResponse("crm_products.html", {
         "request": request,
         "products": crm_products
@@ -390,7 +390,7 @@ async def sales_notes_list(request: Request, db: Session = Depends(get_db)):
         SalesNote.created_at,
         SalesNote.updated_at,
         Customer.name.label('customer_name')
-    ).join(Customer).all()
+    ).join(Customer).order_by(SalesNote.note_id).all()
     
     return templates.TemplateResponse("sales_notes.html", {
         "request": request,
