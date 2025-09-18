@@ -17,10 +17,9 @@
                 <thead class="table-light">
                     <tr>
                         <th onclick="sortTable(0)" style="width: 80px;">メモID <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(1)" style="width: 120px;">顧客名 <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(2)" style="width: 150px;">件名 <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(3)" style="width: auto;">内容 <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(4)" style="width: 100px;">作成日 <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(1)" style="width: 150px;">顧客名 <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(2)" style="width: auto;">内容 <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(3)" style="width: 100px;">作成日 <i class="fas fa-sort"></i></th>
                         <th style="width: 100px;">操作</th>
                     </tr>
                 </thead>
@@ -28,14 +27,13 @@
                     {% for note in sales_notes %}
                     <tr>
                         <td style="width: 80px;">{{ note.note_id }}</td>
-                        <td style="width: 120px; word-wrap: break-word;">{{ note.customer_name }}</td>
-                        <td style="width: 150px; word-wrap: break-word;">{{ note.subject or '-' }}</td>
+                        <td style="width: 150px; word-wrap: break-word;">{{ note.customer_name }}</td>
                         <td>
-                            <div id="content-preview-{{ note.note_id }}" style="max-width: 500px; max-height: 120px; overflow-y: auto; word-wrap: break-word; white-space: pre-wrap; line-height: 1.4;">
+                            <div id="content-preview-{{ note.note_id }}" style="max-width: 600px; max-height: 120px; overflow-y: auto; word-wrap: break-word; white-space: pre-wrap; line-height: 1.4;">
                                 {{ note.content[:300] }}{% if note.content|length > 300 %}...{% endif %}
                             </div>
                             {% if note.content|length > 300 %}
-                            <div id="content-full-{{ note.note_id }}" style="display: none; max-width: 500px; word-wrap: break-word; white-space: pre-wrap; line-height: 1.4;">
+                            <div id="content-full-{{ note.note_id }}" style="display: none; max-width: 600px; word-wrap: break-word; white-space: pre-wrap; line-height: 1.4;">
                                 {{ note.content }}
                             </div>
                             <button class="btn btn-sm btn-link p-0 mt-1" onclick="toggleContent({{ note.note_id }})">
@@ -46,7 +44,7 @@
                         <td style="width: 100px;">{{ note.created_at.strftime('%Y-%m-%d') if note.created_at else '-' }}</td>
                         <td style="width: 100px;">
                             <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="editNote({{ note.note_id }}, '{{ note.subject or '' }}', '{{ note.content|replace("'", "\\'") }}', {{ note.customer_id }})">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="editNote({{ note.note_id }}, '{{ note.content|replace("'", "\\'") }}', {{ note.customer_id }})">
                                     <i class="fas fa-edit"></i>
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteNote({{ note.note_id }})">
@@ -78,12 +76,8 @@
                         <input type="number" class="form-control" id="customerId" required>
                     </div>
                     <div class="mb-3">
-                        <label for="subject" class="form-label">件名</label>
-                        <input type="text" class="form-control" id="subject">
-                    </div>
-                    <div class="mb-3">
                         <label for="content" class="form-label">内容</label>
-                        <textarea class="form-control" id="content" rows="5" required></textarea>
+                        <textarea class="form-control" id="content" rows="8" required></textarea>
                     </div>
                 </form>
             </div>
@@ -155,16 +149,14 @@ function showAddModal() {
     document.getElementById('noteModalTitle').textContent = '営業メモ追加';
     document.getElementById('noteId').value = '';
     document.getElementById('customerId').value = '';
-    document.getElementById('subject').value = '';
     document.getElementById('content').value = '';
     new bootstrap.Modal(document.getElementById('noteModal')).show();
 }
 
-function editNote(noteId, subject, content, customerId) {
+function editNote(noteId, content, customerId) {
     document.getElementById('noteModalTitle').textContent = '営業メモ編集';
     document.getElementById('noteId').value = noteId;
     document.getElementById('customerId').value = customerId;
-    document.getElementById('subject').value = subject;
     document.getElementById('content').value = content;
     new bootstrap.Modal(document.getElementById('noteModal')).show();
 }
@@ -172,7 +164,6 @@ function editNote(noteId, subject, content, customerId) {
 async function saveNote() {
     const noteId = document.getElementById('noteId').value;
     const customerId = document.getElementById('customerId').value;
-    const subject = document.getElementById('subject').value;
     const content = document.getElementById('content').value;
     
     try {
@@ -182,14 +173,14 @@ async function saveNote() {
             response = await fetch(`/api/sales-notes/${noteId}`, {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: `subject=${encodeURIComponent(subject)}&content=${encodeURIComponent(content)}`
+                body: `content=${encodeURIComponent(content)}`
             });
         } else {
             // 新規追加
             response = await fetch('/api/sales-notes', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: `customer_id=${customerId}&subject=${encodeURIComponent(subject)}&content=${encodeURIComponent(content)}`
+                body: `customer_id=${customerId}&content=${encodeURIComponent(content)}`
             });
         }
         

@@ -113,10 +113,9 @@ class Holding(Base):
 class SalesNote(Base):
     __tablename__ = "sales_notes"
     
+    customer_id = Column(Integer, ForeignKey("customers.customer_id"), primary_key=True)
     note_id = Column(Integer, primary_key=True, index=True)
-    customer_id = Column(Integer, ForeignKey("customers.customer_id"))
     sales_rep_id = Column(Integer, ForeignKey("sales_representatives.rep_id"))
-    subject = Column(String(200))
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

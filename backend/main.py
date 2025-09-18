@@ -143,7 +143,6 @@ async def customer_detail(request: Request, customer_id: int, db: Session = Depe
         SalesNote.note_id,
         SalesNote.customer_id,
         SalesNote.sales_rep_id,
-        SalesNote.subject,
         SalesNote.content,
         SalesNote.created_at,
         SalesNote.updated_at
@@ -385,12 +384,11 @@ async def sales_notes_list(request: Request, db: Session = Depends(get_db)):
         SalesNote.note_id,
         SalesNote.customer_id,
         SalesNote.sales_rep_id,
-        SalesNote.subject,
         SalesNote.content,
         SalesNote.created_at,
         SalesNote.updated_at,
         Customer.name.label('customer_name')
-    ).join(Customer).order_by(SalesNote.note_id).all()
+    ).join(Customer).order_by(SalesNote.customer_id, SalesNote.note_id).all()
     
     return templates.TemplateResponse("sales_notes.html", {
         "request": request,
@@ -407,13 +405,11 @@ async def create_sales_note(
     try:
         form = await request.form()
         customer_id = int(form.get("customer_id"))
-        subject = form.get("subject", "")
         content = form.get("content", "")
         
         new_note = SalesNote(
             customer_id=customer_id,
             sales_rep_id=1,  # デフォルト担当者
-            subject=subject,
             content=content
         )
         db.add(new_note)
@@ -433,14 +429,12 @@ async def update_sales_note(
     """営業メモ更新"""
     try:
         form = await request.form()
-        subject = form.get("subject", "")
         content = form.get("content", "")
         
         note = db.query(SalesNote).filter(SalesNote.note_id == note_id).first()
         if not note:
             raise HTTPException(status_code=404, detail="メモが見つかりません")
         
-        note.subject = subject
         note.content = content
         db.commit()
         return {"status": "success"}
