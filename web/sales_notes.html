@@ -26,24 +26,24 @@
                 <tbody>
                     {% for note in sales_notes %}
                     <tr>
-                        <td style="width: 60px; min-width: 60px;">{{ note.note_id }}</td>
+                        <td style="width: 60px; min-width: 60px;">{{ note.customer_id }}</td>
                         <td style="width: 120px; min-width: 120px; word-wrap: break-word;">{{ note.customer_name }}</td>
                         <td style="width: calc(100% - 280px); min-width: 400px;">
-                            <div id="content-preview-{{ note.note_id }}" style="width: 100%; max-height: 120px; overflow-y: auto; word-wrap: break-word; white-space: pre-wrap; line-height: 1.4; padding: 8px; border: 1px solid #e9ecef; border-radius: 4px; background-color: #f8f9fa;">{{ note.content[:300] }}{% if note.content|length > 300 %}...{% endif %}</div>
+                            <div id="content-preview-{{ note.customer_id }}" style="width: 100%; max-height: 120px; overflow-y: auto; word-wrap: break-word; white-space: pre-wrap; line-height: 1.4; padding: 8px; border: 1px solid #e9ecef; border-radius: 4px; background-color: #f8f9fa;">{{ note.content[:300] }}{% if note.content|length > 300 %}...{% endif %}</div>
                             {% if note.content|length > 300 %}
-                            <div id="content-full-{{ note.note_id }}" style="display: none; width: 100%; word-wrap: break-word; white-space: pre-wrap; line-height: 1.4; padding: 8px; border: 1px solid #e9ecef; border-radius: 4px; background-color: #f8f9fa;">{{ note.content }}</div>
-                            <button class="btn btn-sm btn-link p-0 mt-1" onclick="toggleContent({{ note.note_id }})">
-                                <span id="toggle-text-{{ note.note_id }}">全文表示</span>
+                            <div id="content-full-{{ note.customer_id }}" style="display: none; width: 100%; word-wrap: break-word; white-space: pre-wrap; line-height: 1.4; padding: 8px; border: 1px solid #e9ecef; border-radius: 4px; background-color: #f8f9fa;">{{ note.content }}</div>
+                            <button class="btn btn-sm btn-link p-0 mt-1" onclick="toggleContent({{ note.customer_id }})">
+                                <span id="toggle-text-{{ note.customer_id }}">全文表示</span>
                             </button>
                             {% endif %}
                         </td>
                         <td style="width: 80px; min-width: 80px;">{{ note.created_at.strftime('%m-%d') if note.created_at else '-' }}</td>
                         <td style="width: 80px; min-width: 80px;">
                             <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="editNote({{ note.note_id }}, '{{ note.content|replace("'", "\\'") }}', {{ note.customer_id }})">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="editNote({{ note.customer_id }}, '{{ note.content|replace("'", "\\'") }}', {{ note.customer_id }})">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteNote({{ note.note_id }})">
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteNote({{ note.customer_id }})">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -135,10 +135,10 @@ function sortTable(n) {
     }
 }
 
-function toggleContent(noteId) {
-    const preview = document.getElementById(`content-preview-${noteId}`);
-    const full = document.getElementById(`content-full-${noteId}`);
-    const toggleText = document.getElementById(`toggle-text-${noteId}`);
+function toggleContent(customerId) {
+    const preview = document.getElementById(`content-preview-${customerId}`);
+    const full = document.getElementById(`content-full-${customerId}`);
+    const toggleText = document.getElementById(`toggle-text-${customerId}`);
     
     if (full.style.display === 'none') {
         preview.style.display = 'none';
@@ -164,9 +164,9 @@ function showAddModal() {
     new bootstrap.Modal(document.getElementById('noteModal')).show();
 }
 
-function editNote(noteId, content, customerId) {
+function editNote(customerId, content, customerIdParam) {
     document.getElementById('noteModalTitle').textContent = '営業メモ編集';
-    document.getElementById('noteId').value = noteId;
+    document.getElementById('noteId').value = customerId;
     document.getElementById('content').value = content;
     
     // 編集時は顧客名を表示（編集不可）
@@ -184,23 +184,23 @@ function editNote(noteId, content, customerId) {
 }
 
 async function saveNote() {
-    const noteId = document.getElementById('noteId').value;
+    const customerId = document.getElementById('noteId').value;
     const content = document.getElementById('content').value;
     
-    let customerId;
-    if (noteId) {
+    let customerIdToUse;
+    if (customerId) {
         // 編集時
-        customerId = document.getElementById('customerId').value;
+        customerIdToUse = customerId;
     } else {
         // 新規追加時
-        customerId = document.getElementById('customerSelect').value;
+        customerIdToUse = document.getElementById('customerSelect').value;
     }
     
     try {
         let response;
-        if (noteId) {
+        if (customerId) {
             // 編集
-            response = await fetch(`/api/sales-notes/${noteId}`, {
+            response = await fetch(`/api/sales-notes/${customerId}`, {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                 body: `content=${encodeURIComponent(content)}`
@@ -210,7 +210,7 @@ async function saveNote() {
             response = await fetch('/api/sales-notes', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: `customer_id=${customerId}&content=${encodeURIComponent(content)}`
+                body: `customer_id=${customerIdToUse}&content=${encodeURIComponent(content)}`
             });
         }
         
@@ -226,11 +226,11 @@ async function saveNote() {
     }
 }
 
-async function deleteNote(noteId) {
+async function deleteNote(customerId) {
     if (!confirm('このメモを削除しますか？')) return;
     
     try {
-        const response = await fetch(`/api/sales-notes/${noteId}`, {
+        const response = await fetch(`/api/sales-notes/${customerId}`, {
             method: 'DELETE'
         });
         

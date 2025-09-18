@@ -114,7 +114,6 @@ class SalesNote(Base):
     __tablename__ = "sales_notes"
     
     customer_id = Column(Integer, ForeignKey("customers.customer_id"), primary_key=True)
-    note_id = Column(Integer, primary_key=True, index=True)
     sales_rep_id = Column(Integer, ForeignKey("sales_representatives.rep_id"))
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, server_default=func.now())

@@ -140,7 +140,6 @@ async def customer_detail(request: Request, customer_id: int, db: Session = Depe
     
     # 営業メモを取得（シンプル化後のフィールドのみ）
     sales_notes = db.query(
-        SalesNote.note_id,
         SalesNote.customer_id,
         SalesNote.sales_rep_id,
         SalesNote.content,
@@ -381,14 +380,13 @@ async def sales_notes_list(request: Request, db: Session = Depends(get_db)):
     """営業メモ一覧"""
     # シンプル化後のフィールドのみ取得
     sales_notes = db.query(
-        SalesNote.note_id,
         SalesNote.customer_id,
         SalesNote.sales_rep_id,
         SalesNote.content,
         SalesNote.created_at,
         SalesNote.updated_at,
         Customer.name.label('customer_name')
-    ).join(Customer).order_by(SalesNote.customer_id, SalesNote.note_id).all()
+    ).join(Customer).order_by(SalesNote.customer_id).all()
     
     # メモが未作成の顧客のみ取得
     customers_with_notes = db.query(SalesNote.customer_id).distinct().subquery()
@@ -422,14 +420,14 @@ async def create_sales_note(
         db.add(new_note)
         db.commit()
         db.refresh(new_note)
-        return {"status": "success", "note_id": new_note.note_id}
+        return {"status": "success", "customer_id": new_note.customer_id}
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.put("/api/sales-notes/{note_id}")
+@app.put("/api/sales-notes/{customer_id}")
 async def update_sales_note(
-    note_id: int,
+    customer_id: int,
     request: Request,
     db: Session = Depends(get_db)
 ):
@@ -438,7 +436,7 @@ async def update_sales_note(
         form = await request.form()
         content = form.get("content", "")
         
-        note = db.query(SalesNote).filter(SalesNote.note_id == note_id).first()
+        note = db.query(SalesNote).filter(SalesNote.customer_id == customer_id).first()
         if not note:
             raise HTTPException(status_code=404, detail="メモが見つかりません")
         
@@ -449,11 +447,11 @@ async def update_sales_note(
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.delete("/api/sales-notes/{note_id}")
-async def delete_sales_note(note_id: int, db: Session = Depends(get_db)):
+@app.delete("/api/sales-notes/{customer_id}")
+async def delete_sales_note(customer_id: int, db: Session = Depends(get_db)):
     """営業メモ削除"""
     try:
-        note = db.query(SalesNote).filter(SalesNote.note_id == note_id).first()
+        note = db.query(SalesNote).filter(SalesNote.customer_id == customer_id).first()
         if not note:
             raise HTTPException(status_code=404, detail="メモが見つかりません")
         
