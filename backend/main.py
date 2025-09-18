@@ -390,9 +390,13 @@ async def sales_notes_list(request: Request, db: Session = Depends(get_db)):
         Customer.name.label('customer_name')
     ).join(Customer).order_by(SalesNote.customer_id, SalesNote.note_id).all()
     
+    # 顧客一覧も取得
+    customers = db.query(Customer).order_by(Customer.customer_id).all()
+    
     return templates.TemplateResponse("sales_notes.html", {
         "request": request,
-        "sales_notes": sales_notes
+        "sales_notes": sales_notes,
+        "customers": customers
     })
 
 # 営業メモ CRUD API

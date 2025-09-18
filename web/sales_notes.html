@@ -29,13 +29,9 @@
                         <td style="width: 80px;">{{ note.note_id }}</td>
                         <td style="width: 150px; word-wrap: break-word;">{{ note.customer_name }}</td>
                         <td>
-                            <div id="content-preview-{{ note.note_id }}" style="max-width: 600px; max-height: 120px; overflow-y: auto; word-wrap: break-word; white-space: pre-wrap; line-height: 1.4;">
-                                {{ note.content[:300] }}{% if note.content|length > 300 %}...{% endif %}
-                            </div>
+                            <div id="content-preview-{{ note.note_id }}" style="max-width: 600px; max-height: 120px; overflow-y: auto; word-wrap: break-word; white-space: pre-wrap; line-height: 1.4; padding: 8px; border: 1px solid #e9ecef; border-radius: 4px; background-color: #f8f9fa;">{{ note.content[:300] }}{% if note.content|length > 300 %}...{% endif %}</div>
                             {% if note.content|length > 300 %}
-                            <div id="content-full-{{ note.note_id }}" style="display: none; max-width: 600px; word-wrap: break-word; white-space: pre-wrap; line-height: 1.4;">
-                                {{ note.content }}
-                            </div>
+                            <div id="content-full-{{ note.note_id }}" style="display: none; max-width: 600px; word-wrap: break-word; white-space: pre-wrap; line-height: 1.4; padding: 8px; border: 1px solid #e9ecef; border-radius: 4px; background-color: #f8f9fa;">{{ note.content }}</div>
                             <button class="btn btn-sm btn-link p-0 mt-1" onclick="toggleContent({{ note.note_id }})">
                                 <span id="toggle-text-{{ note.note_id }}">全文表示</span>
                             </button>
@@ -71,9 +67,19 @@
             <div class="modal-body">
                 <form id="noteForm">
                     <input type="hidden" id="noteId" value="">
-                    <div class="mb-3">
-                        <label for="customerId" class="form-label">顧客ID</label>
-                        <input type="number" class="form-control" id="customerId" required>
+                    <div class="mb-3" id="customerSelectDiv">
+                        <label for="customerSelect" class="form-label">顧客</label>
+                        <select class="form-control" id="customerSelect" required>
+                            <option value="">顧客を選択してください</option>
+                            {% for customer in customers %}
+                            <option value="{{ customer.customer_id }}">{{ customer.customer_id }} - {{ customer.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3" id="customerDisplayDiv" style="display: none;">
+                        <label class="form-label">顧客</label>
+                        <input type="text" class="form-control" id="customerDisplay" readonly>
+                        <input type="hidden" id="customerId">
                     </div>
                     <div class="mb-3">
                         <label for="content" class="form-label">内容</label>
@@ -148,23 +154,47 @@ function toggleContent(noteId) {
 function showAddModal() {
     document.getElementById('noteModalTitle').textContent = '営業メモ追加';
     document.getElementById('noteId').value = '';
-    document.getElementById('customerId').value = '';
+    document.getElementById('customerSelect').value = '';
     document.getElementById('content').value = '';
+    
+    // 新規追加時は顧客選択を表示
+    document.getElementById('customerSelectDiv').style.display = 'block';
+    document.getElementById('customerDisplayDiv').style.display = 'none';
+    
     new bootstrap.Modal(document.getElementById('noteModal')).show();
 }
 
 function editNote(noteId, content, customerId) {
     document.getElementById('noteModalTitle').textContent = '営業メモ編集';
     document.getElementById('noteId').value = noteId;
-    document.getElementById('customerId').value = customerId;
     document.getElementById('content').value = content;
+    
+    // 編集時は顧客名を表示（編集不可）
+    const customerSelect = document.getElementById('customerSelect');
+    const selectedOption = customerSelect.querySelector(`option[value="${customerId}"]`);
+    const customerName = selectedOption ? selectedOption.textContent : `顧客ID: ${customerId}`;
+    
+    document.getElementById('customerDisplay').value = customerName;
+    document.getElementById('customerId').value = customerId;
+    
+    document.getElementById('customerSelectDiv').style.display = 'none';
+    document.getElementById('customerDisplayDiv').style.display = 'block';
+    
     new bootstrap.Modal(document.getElementById('noteModal')).show();
 }
 
 async function saveNote() {
     const noteId = document.getElementById('noteId').value;
-    const customerId = document.getElementById('customerId').value;
     const content = document.getElementById('content').value;
+    
+    let customerId;
+    if (noteId) {
+        // 編集時
+        customerId = document.getElementById('customerId').value;
+    } else {
+        // 新規追加時
+        customerId = document.getElementById('customerSelect').value;
+    }
     
     try {
         let response;
