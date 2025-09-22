@@ -10,6 +10,7 @@
             <table class="table table-hover">
                 <thead class="table-light">
                     <tr>
+                        <th>ID</th>
                         <th>商品コード</th>
                         <th>商品名</th>
                         <th>種類</th>
@@ -25,6 +26,7 @@
                 <tbody>
                     {% for product in products %}
                     <tr>
+                        <td><span class="badge bg-light text-dark">{{ product.product_id }}</span></td>
                         <td><strong>{{ product.product_code }}</strong></td>
                         <td>{{ product.product_name }}</td>
                         <td>
