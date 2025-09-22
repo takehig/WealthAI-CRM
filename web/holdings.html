@@ -201,6 +201,15 @@
                 <input type="hidden" id="editHoldingId" name="holding_id">
                 <div class="modal-body">
                     <div class="mb-3">
+                        <label class="form-label">商品 *</label>
+                        <select class="form-select" id="editProductId" name="product_id" required>
+                            <option value="">商品を選択してください</option>
+                            {% for product in products %}
+                            <option value="{{ product.id }}">{{ product.product_name }} (ID: {{ product.id }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">数量 *</label>
                         <input type="number" class="form-control" id="editQuantity" name="quantity" step="0.01" required>
                     </div>
@@ -277,6 +286,7 @@ async function editHolding(holdingId) {
         
         // フォームに既存データを設定
         document.getElementById('editHoldingId').value = holding.holding_id || '';
+        document.getElementById('editProductId').value = holding.product_id || '';
         document.getElementById('editQuantity').value = holding.quantity || '';
         document.getElementById('editUnitPrice').value = holding.unit_price || '';
         document.getElementById('editCurrentPrice').value = holding.current_price || '';
