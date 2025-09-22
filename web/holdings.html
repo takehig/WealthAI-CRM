@@ -205,7 +205,7 @@
                         <select class="form-select" id="editProductId" name="product_id" required>
                             <option value="">商品を選択してください</option>
                             {% for product in products %}
-                            <option value="{{ product.id }}">{{ product.product_name }} (ID: {{ product.id }})</option>
+                            <option value="{{ product.product_id }}">{{ product.product_name }} (ID: {{ product.product_id }})</option>
                             {% endfor %}
                         </select>
                     </div>

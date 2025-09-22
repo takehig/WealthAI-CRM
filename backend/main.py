@@ -19,14 +19,6 @@ from typing import List
 import os
 from pathlib import Path
 
-# CRM商品モデル
-class CRMProduct(Base):
-    __tablename__ = "crm_products"
-    id = Column(Integer, primary_key=True)
-    product_code = Column(String(50), unique=True)
-    product_name = Column(String(200))
-    maturity_date = Column(Date)
-
 # Pydantic モデル
 class CustomerCreate(BaseModel):
     customer_code: str
@@ -163,21 +155,21 @@ async def holdings_list(request: Request, db: Session = Depends(get_db)):
     """保有商品一覧"""
     holdings = db.query(Holding).join(Customer).join(Product).filter(Holding.status == 'active').order_by(Holding.holding_id).all()
     customers = db.query(Customer).all()
-    crm_products = db.query(CRMProduct).all()
+    products = db.query(Product).all()
     return templates.TemplateResponse("holdings.html", {
         "request": request,
         "holdings": holdings,
         "customers": customers,
-        "products": crm_products
+        "products": products
     })
 
 @app.get("/products", response_class=HTMLResponse)
 async def crm_products_list(request: Request, db: Session = Depends(get_db)):
     """CRM商品一覧"""
-    crm_products = db.query(CRMProduct).order_by(CRMProduct.product_code).all()
+    products = db.query(Product).order_by(Product.product_code).all()
     return templates.TemplateResponse("crm_products.html", {
         "request": request,
-        "products": crm_products
+        "products": products
     })
 
 # 顧客 CRUD API
@@ -298,8 +290,8 @@ async def update_holding_api(holding_id: int, holding_data: HoldingUpdate, db: S
 @app.get("/api/crm-products")
 async def get_crm_products_api(db: Session = Depends(get_db)):
     """CRM商品一覧API"""
-    crm_products = db.query(CRMProduct).all()
-    return crm_products
+    products = db.query(Product).all()
+    return products
 
 @app.post("/api/sync-products")
 async def sync_products_from_master(db: Session = Depends(get_db)):
@@ -314,24 +306,34 @@ async def sync_products_from_master(db: Session = Depends(get_db)):
         products = products_data.get("products", [])
         
         sync_count = 0
-        for product in products:
+        for product_data in products:
             # 既存商品確認
-            existing = db.query(CRMProduct).filter(
-                CRMProduct.product_code == product["product_code"]
+            existing = db.query(Product).filter(
+                Product.product_code == product_data["product_code"]
             ).first()
             
             if existing:
                 # 更新
-                existing.product_name = product["product_name"]
-                existing.maturity_date = product.get("maturity_date")
+                existing.product_name = product_data["product_name"]
+                existing.product_type = product_data.get("product_type", "")
+                existing.currency = product_data.get("currency", "JPY")
+                existing.issuer = product_data.get("issuer", "")
+                existing.maturity_date = product_data.get("maturity_date")
+                existing.risk_level = product_data.get("risk_level", 1)
+                existing.minimum_investment = product_data.get("minimum_investment", 0)
             else:
                 # 新規作成
-                crm_product = CRMProduct(
-                    product_code=product["product_code"],
-                    product_name=product["product_name"],
-                    maturity_date=product.get("maturity_date")
+                product = Product(
+                    product_code=product_data["product_code"],
+                    product_name=product_data["product_name"],
+                    product_type=product_data.get("product_type", ""),
+                    currency=product_data.get("currency", "JPY"),
+                    issuer=product_data.get("issuer", ""),
+                    maturity_date=product_data.get("maturity_date"),
+                    risk_level=product_data.get("risk_level", 1),
+                    minimum_investment=product_data.get("minimum_investment", 0)
                 )
-                db.add(crm_product)
+                db.add(product)
             sync_count += 1
         
         db.commit()
