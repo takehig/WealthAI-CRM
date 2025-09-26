@@ -47,16 +47,16 @@
                             {% endif %}
                         </td>
                         <td>
-                            {% if holding.product.product_type == "bond" %}
+                            {% if holding.product.category_code == "BOND" %}
                                 <span class="badge bg-primary">債券</span>
-                            {% elif holding.product.product_type == "stock" %}
+                            {% elif holding.product.category_code == "STOCK" or holding.product.category_code == "STOCK_US" or holding.product.category_code == "STOCK_DOM" %}
                                 <span class="badge bg-danger">株式</span>
-                            {% elif holding.product.product_type == "fund" %}
+                            {% elif holding.product.category_code == "FUND" %}
                                 <span class="badge bg-success">投信</span>
-                            {% elif holding.product.product_type == "structured_product" %}
+                            {% elif holding.product.category_code == "STRUCT" %}
                                 <span class="badge bg-warning text-dark">仕組み債</span>
                             {% else %}
-                                <span class="badge bg-secondary">{{ holding.product.product_type or "unknown" }}</span>
+                                <span class="badge bg-secondary">{{ holding.product.category_code or "unknown" }}</span>
                             {% endif %}
                         </td>
                         <td class="text-end">
