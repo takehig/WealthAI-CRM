@@ -4,6 +4,24 @@
 {% block header %}顧客一覧{% endblock %}
 
 {% block content %}
+<style>
+    /* テーブル表示領域最大化 */
+    .card-body {
+        padding: 0.5rem;
+    }
+    .table-responsive {
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+    #customersTable {
+        margin-bottom: 0;
+    }
+    .table th, .table td {
+        padding: 0.5rem;
+        vertical-align: middle;
+    }
+</style>
+
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">顧客管理</h5>
