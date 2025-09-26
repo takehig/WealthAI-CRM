@@ -34,13 +34,14 @@
             <table class="table table-hover" id="customersTable">
                 <thead class="table-light">
                     <tr>
-                        <th onclick="sortTable(0)">顧客コード <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(1)">氏名 <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(2)">年齢 <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(3)">職業 <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(4)">年収 <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(5)">純資産 <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(6)">リスク許容度 <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(0)">ID <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(1)">顧客コード <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(2)">氏名 <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(3)">年齢 <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(4)">職業 <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(5)">年収 <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(6)">純資産 <i class="fas fa-sort"></i></th>
+                        <th onclick="sortTable(7)">リスク許容度 <i class="fas fa-sort"></i></th>
                         <th>投資経験</th>
                         <th>担当営業</th>
                         <th>操作</th>
@@ -49,6 +50,7 @@
                 <tbody>
                     {% for customer in customers %}
                     <tr>
+                        <td><span class="badge bg-secondary">{{ customer.customer_id }}</span></td>
                         <td><strong>{{ customer.customer_code or "-" }}</strong></td>
                         <td>
                             <div>
