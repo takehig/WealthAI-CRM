@@ -18,12 +18,12 @@ class ProductMasterService:
             "Content-Type": "application/json"
         }
     
-    async def get_products(self, limit: int = 100, product_type: Optional[str] = None) -> List[Dict]:
+    async def get_products(self, limit: int = 100, category_code: Optional[str] = None) -> List[Dict]:
         """商品一覧を取得"""
         try:
             params = {"limit": limit}
-            if product_type:
-                params["product_type"] = product_type
+            if category_code:
+                params["category_code"] = category_code
             
             async with httpx.AsyncClient() as client:
                 response = await client.get(
@@ -53,13 +53,13 @@ class ProductMasterService:
             print(f"Error fetching product {product_id}: {e}")
             return None
     
-    async def search_products(self, query: str, product_type: Optional[str] = None, 
+    async def search_products(self, query: str, category_code: Optional[str] = None, 
                             risk_level: Optional[int] = None) -> Dict:
         """商品検索"""
         try:
             params = {"q": query}
-            if product_type:
-                params["product_type"] = product_type
+            if category_code:
+                params["category_code"] = category_code
             if risk_level:
                 params["risk_level"] = risk_level
             

@@ -72,7 +72,7 @@ class Product(Base):
     product_id = Column(Integer, primary_key=True, index=True)
     product_code = Column(String(50), unique=True, nullable=False)
     product_name = Column(String(200), nullable=False)
-    product_type = Column(String(50), nullable=False)
+    category_code = Column(String(50), nullable=False)
     currency = Column(String(10), default="JPY")
     issuer = Column(String(100))
     maturity_date = Column(Date)

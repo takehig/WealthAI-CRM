@@ -315,7 +315,7 @@ async def sync_products_from_master(db: Session = Depends(get_db)):
             if existing:
                 # 更新
                 existing.product_name = product_data["product_name"]
-                existing.product_type = product_data.get("product_type", "")
+                existing.category_code = product_data.get("category_code", "")
                 existing.currency = product_data.get("currency", "JPY")
                 existing.issuer = product_data.get("issuer", "")
                 existing.maturity_date = product_data.get("maturity_date")
@@ -326,7 +326,7 @@ async def sync_products_from_master(db: Session = Depends(get_db)):
                 product = Product(
                     product_code=product_data["product_code"],
                     product_name=product_data["product_name"],
-                    product_type=product_data.get("product_type", ""),
+                    category_code=product_data.get("category_code", ""),
                     currency=product_data.get("currency", "JPY"),
                     issuer=product_data.get("issuer", ""),
                     maturity_date=product_data.get("maturity_date"),
